@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+
 import 'Login-Signup/Login.dart';
+import 'splash-Screen/splashscr.dart';
 
 void main() {
   runApp(MyApp());
@@ -11,7 +12,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Image Picker Demo',
-      home: LoginPage(),
+      home: SplashScreen(),
     );
   }
 }
