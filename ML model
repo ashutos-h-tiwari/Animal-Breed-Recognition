@@ -1,0 +1,1019 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "authorship_tag": "ABX9TyNSvtx9AlNg0Up8c/s10Ybs",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/ashutos-h-tiwari/Animal-Breed-Recognition/blob/main/ML%20model\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 1,
+      "metadata": {
+        "id": "InuaKockNJ_x"
+      },
+      "outputs": [],
+      "source": [
+        "# install kaggle client\n",
+        "!pip install -q kaggle\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# This Python 3 environment comes with many helpful analytics libraries installed\n",
+        "# It is defined by the kaggle/python Docker image: https://github.com/kaggle/docker-python\n",
+        "# For example, here's several helpful packages to load\n",
+        "\n",
+        "import numpy as np # linear algebra\n",
+        "import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)\n",
+        "\n",
+        "# Input data files are available in the read-only \"../input/\" directory\n",
+        "# For example, running this (by clicking run or pressing Shift+Enter) will list all files under the input directory\n",
+        "\n",
+        "import os\n",
+        "for dirname, _, filenames in os.walk('/kaggle/input'):\n",
+        "    for filename in filenames:\n",
+        "        print(os.path.join(dirname, filename))\n",
+        "\n",
+        "# You can write up to 20GB to the current directory (/kaggle/working/) that gets preserved as output when you create a version using \"Save & Run All\"\n",
+        "# You can also write temporary files to /kaggle/temp/, but they won't be saved outside of the current session\n"
+      ],
+      "metadata": {
+        "id": "26xb8Q29NOTv"
+      },
+      "execution_count": 12,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from google.colab import files\n",
+        "files.upload()   # choose kaggle.json file from your computer\n",
+        "\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 90
+        },
+        "id": "U1mcvU0NR4KJ",
+        "outputId": "486f36d4-f2ef-466e-d3a7-ec1ce2e59802"
+      },
+      "execution_count": 14,
+      "outputs": [
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "<IPython.core.display.HTML object>"
+            ],
+            "text/html": [
+              "\n",
+              "     <input type=\"file\" id=\"files-f62a2b70-96ae-43a6-812b-2221ce9045b6\" name=\"files[]\" multiple disabled\n",
+              "        style=\"border:none\" />\n",
+              "     <output id=\"result-f62a2b70-96ae-43a6-812b-2221ce9045b6\">\n",
+              "      Upload widget is only available when the cell has been executed in the\n",
+              "      current browser session. Please rerun this cell to enable.\n",
+              "      </output>\n",
+              "      <script>// Copyright 2017 Google LLC\n",
+              "//\n",
+              "// Licensed under the Apache License, Version 2.0 (the \"License\");\n",
+              "// you may not use this file except in compliance with the License.\n",
+              "// You may obtain a copy of the License at\n",
+              "//\n",
+              "//      http://www.apache.org/licenses/LICENSE-2.0\n",
+              "//\n",
+              "// Unless required by applicable law or agreed to in writing, software\n",
+              "// distributed under the License is distributed on an \"AS IS\" BASIS,\n",
+              "// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n",
+              "// See the License for the specific language governing permissions and\n",
+              "// limitations under the License.\n",
+              "\n",
+              "/**\n",
+              " * @fileoverview Helpers for google.colab Python module.\n",
+              " */\n",
+              "(function(scope) {\n",
+              "function span(text, styleAttributes = {}) {\n",
+              "  const element = document.createElement('span');\n",
+              "  element.textContent = text;\n",
+              "  for (const key of Object.keys(styleAttributes)) {\n",
+              "    element.style[key] = styleAttributes[key];\n",
+              "  }\n",
+              "  return element;\n",
+              "}\n",
+              "\n",
+              "// Max number of bytes which will be uploaded at a time.\n",
+              "const MAX_PAYLOAD_SIZE = 100 * 1024;\n",
+              "\n",
+              "function _uploadFiles(inputId, outputId) {\n",
+              "  const steps = uploadFilesStep(inputId, outputId);\n",
+              "  const outputElement = document.getElementById(outputId);\n",
+              "  // Cache steps on the outputElement to make it available for the next call\n",
+              "  // to uploadFilesContinue from Python.\n",
+              "  outputElement.steps = steps;\n",
+              "\n",
+              "  return _uploadFilesContinue(outputId);\n",
+              "}\n",
+              "\n",
+              "// This is roughly an async generator (not supported in the browser yet),\n",
+              "// where there are multiple asynchronous steps and the Python side is going\n",
+              "// to poll for completion of each step.\n",
+              "// This uses a Promise to block the python side on completion of each step,\n",
+              "// then passes the result of the previous step as the input to the next step.\n",
+              "function _uploadFilesContinue(outputId) {\n",
+              "  const outputElement = document.getElementById(outputId);\n",
+              "  const steps = outputElement.steps;\n",
+              "\n",
+              "  const next = steps.next(outputElement.lastPromiseValue);\n",
+              "  return Promise.resolve(next.value.promise).then((value) => {\n",
+              "    // Cache the last promise value to make it available to the next\n",
+              "    // step of the generator.\n",
+              "    outputElement.lastPromiseValue = value;\n",
+              "    return next.value.response;\n",
+              "  });\n",
+              "}\n",
+              "\n",
+              "/**\n",
+              " * Generator function which is called between each async step of the upload\n",
+              " * process.\n",
+              " * @param {string} inputId Element ID of the input file picker element.\n",
+              " * @param {string} outputId Element ID of the output display.\n",
+              " * @return {!Iterable<!Object>} Iterable of next steps.\n",
+              " */\n",
+              "function* uploadFilesStep(inputId, outputId) {\n",
+              "  const inputElement = document.getElementById(inputId);\n",
+              "  inputElement.disabled = false;\n",
+              "\n",
+              "  const outputElement = document.getElementById(outputId);\n",
+              "  outputElement.innerHTML = '';\n",
+              "\n",
+              "  const pickedPromise = new Promise((resolve) => {\n",
+              "    inputElement.addEventListener('change', (e) => {\n",
+              "      resolve(e.target.files);\n",
+              "    });\n",
+              "  });\n",
+              "\n",
+              "  const cancel = document.createElement('button');\n",
+              "  inputElement.parentElement.appendChild(cancel);\n",
+              "  cancel.textContent = 'Cancel upload';\n",
+              "  const cancelPromise = new Promise((resolve) => {\n",
+              "    cancel.onclick = () => {\n",
+              "      resolve(null);\n",
+              "    };\n",
+              "  });\n",
+              "\n",
+              "  // Wait for the user to pick the files.\n",
+              "  const files = yield {\n",
+              "    promise: Promise.race([pickedPromise, cancelPromise]),\n",
+              "    response: {\n",
+              "      action: 'starting',\n",
+              "    }\n",
+              "  };\n",
+              "\n",
+              "  cancel.remove();\n",
+              "\n",
+              "  // Disable the input element since further picks are not allowed.\n",
+              "  inputElement.disabled = true;\n",
+              "\n",
+              "  if (!files) {\n",
+              "    return {\n",
+              "      response: {\n",
+              "        action: 'complete',\n",
+              "      }\n",
+              "    };\n",
+              "  }\n",
+              "\n",
+              "  for (const file of files) {\n",
+              "    const li = document.createElement('li');\n",
+              "    li.append(span(file.name, {fontWeight: 'bold'}));\n",
+              "    li.append(span(\n",
+              "        `(${file.type || 'n/a'}) - ${file.size} bytes, ` +\n",
+              "        `last modified: ${\n",
+              "            file.lastModifiedDate ? file.lastModifiedDate.toLocaleDateString() :\n",
+              "                                    'n/a'} - `));\n",
+              "    const percent = span('0% done');\n",
+              "    li.appendChild(percent);\n",
+              "\n",
+              "    outputElement.appendChild(li);\n",
+              "\n",
+              "    const fileDataPromise = new Promise((resolve) => {\n",
+              "      const reader = new FileReader();\n",
+              "      reader.onload = (e) => {\n",
+              "        resolve(e.target.result);\n",
+              "      };\n",
+              "      reader.readAsArrayBuffer(file);\n",
+              "    });\n",
+              "    // Wait for the data to be ready.\n",
+              "    let fileData = yield {\n",
+              "      promise: fileDataPromise,\n",
+              "      response: {\n",
+              "        action: 'continue',\n",
+              "      }\n",
+              "    };\n",
+              "\n",
+              "    // Use a chunked sending to avoid message size limits. See b/62115660.\n",
+              "    let position = 0;\n",
+              "    do {\n",
+              "      const length = Math.min(fileData.byteLength - position, MAX_PAYLOAD_SIZE);\n",
+              "      const chunk = new Uint8Array(fileData, position, length);\n",
+              "      position += length;\n",
+              "\n",
+              "      const base64 = btoa(String.fromCharCode.apply(null, chunk));\n",
+              "      yield {\n",
+              "        response: {\n",
+              "          action: 'append',\n",
+              "          file: file.name,\n",
+              "          data: base64,\n",
+              "        },\n",
+              "      };\n",
+              "\n",
+              "      let percentDone = fileData.byteLength === 0 ?\n",
+              "          100 :\n",
+              "          Math.round((position / fileData.byteLength) * 100);\n",
+              "      percent.textContent = `${percentDone}% done`;\n",
+              "\n",
+              "    } while (position < fileData.byteLength);\n",
+              "  }\n",
+              "\n",
+              "  // All done.\n",
+              "  yield {\n",
+              "    response: {\n",
+              "      action: 'complete',\n",
+              "    }\n",
+              "  };\n",
+              "}\n",
+              "\n",
+              "scope.google = scope.google || {};\n",
+              "scope.google.colab = scope.google.colab || {};\n",
+              "scope.google.colab._files = {\n",
+              "  _uploadFiles,\n",
+              "  _uploadFilesContinue,\n",
+              "};\n",
+              "})(self);\n",
+              "</script> "
+            ]
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Saving kaggle.json to kaggle (3).json\n"
+          ]
+        },
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "{'kaggle (3).json': b'{\"username\":\"urvityagi\",\"key\":\"7ba914edcb05d4c958dda9b834088da4\"}'}"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 14
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!mkdir -p ~/.kaggle\n",
+        "!cp kaggle.json ~/.kaggle/\n",
+        "!chmod 600 ~/.kaggle/kaggle.json\n",
+        "\n"
+      ],
+      "metadata": {
+        "id": "tGLTNcVFSLN1"
+      },
+      "execution_count": 15,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from google.colab import drive\n",
+        "drive.mount('/content/drive')  # follow auth link\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "xf1wtlqXScu0",
+        "outputId": "dc01e442-49e1-4545-8b73-64a5fc6938cf"
+      },
+      "execution_count": 16,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Mounted at /content/drive\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!kaggle datasets download -d raghavdharwal/cows-and-buffalo-computer-vision-dataset -p /content/data\n",
+        "\n",
+        "\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "Wn_FMUfQTzF9",
+        "outputId": "efd7266b-72e4-4f3b-b1dd-070abd500e48"
+      },
+      "execution_count": 18,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Dataset URL: https://www.kaggle.com/datasets/raghavdharwal/cows-and-buffalo-computer-vision-dataset\n",
+            "License(s): MIT\n",
+            "Downloading cows-and-buffalo-computer-vision-dataset.zip to /content/data\n",
+            "  0% 0.00/103M [00:00<?, ?B/s]\n",
+            "100% 103M/103M [00:00<00:00, 1.09GB/s]\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Unzip the Cows and Buffalo dataset\n",
+        "!unzip -q /content/data/cows-and-buffalo-computer-vision-dataset.zip -d /content/data || true\n"
+      ],
+      "metadata": {
+        "id": "3U6ORyhXUQnS"
+      },
+      "execution_count": 19,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import os\n",
+        "os.listdir(\"/content/data\")\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "igO88eiRUXsC",
+        "outputId": "17d65083-b9fa-4dca-ac52-7dbda3511082"
+      },
+      "execution_count": 20,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "['README.roboflow.txt',\n",
+              " 'data.yaml',\n",
+              " 'cows-and-buffalo-computer-vision-dataset.zip',\n",
+              " 'README.dataset.txt',\n",
+              " 'train']"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 20
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import os\n",
+        "import matplotlib.pyplot as plt\n",
+        "import cv2\n",
+        "import random\n",
+        "\n",
+        "# Set dataset path\n",
+        "dataset_path = \"/content/data\" # Corrected path\n",
+        "\n",
+        "# List classes (folders)\n",
+        "classes = os.listdir(dataset_path)\n",
+        "print(\"Contents of dataset_path:\", classes) # Print contents to verify\n",
+        "\n",
+        "# Assuming the actual class folders (train, test, etc.) are directly in dataset_path,\n",
+        "# we need to adjust the logic to find the image directories within these.\n",
+        "# For now, let's just list the contents of the base path.\n",
+        "# Further steps will be needed to navigate into train/test and then class folders.\n",
+        "\n",
+        "# The original code attempted to list classes directly under the assumed dataset_path,\n",
+        "# which was incorrect based on the extraction.\n",
+        "# We need to find the actual image directories within the extracted structure.\n",
+        "\n",
+        "# Let's first just confirm the base path is correct and see its contents.\n",
+        "# The subsequent steps for counting and previewing images will need adjustment\n",
+        "# based on the actual directory structure within /content/data.\n",
+        "\n",
+        "# Example of how you might proceed after confirming the base path:\n",
+        "# Look for 'train' and 'test' directories within dataset_path\n",
+        "# train_dir = os.path.join(dataset_path, 'train')\n",
+        "# test_dir = os.path.join(dataset_path, 'test')\n",
+        "\n",
+        "# if os.path.exists(train_dir):\n",
+        "#     print(f\"\\nContents of train directory: {os.listdir(train_dir)}\")\n",
+        "#     # Now you would list the class folders (cows, buffalo) inside train_dir\n",
+        "#     # and then process images within those.\n",
+        "\n",
+        "# The original code for counting and previewing images needs to be adapted\n",
+        "# to the actual dataset structure. I will stop here for now to let you\n",
+        "# examine the contents of /content/data after this correction."
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "qVMdbF3OU4Ze",
+        "outputId": "e2a3239f-80e0-4ba1-85a8-29f1c84775e5"
+      },
+      "execution_count": 23,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Contents of dataset_path: ['README.roboflow.txt', 'data.yaml', 'cows-and-buffalo-computer-vision-dataset.zip', 'README.dataset.txt', 'train']\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import os\n",
+        "import shutil\n",
+        "import random\n",
+        "\n",
+        "# Set paths - Corrected dataset_path to point to the directory containing class folders\n",
+        "# Based on previous output, the class folders ('cows' and 'buffalo') are likely inside 'train'\n",
+        "# within the original extracted data. Let's assume the structure is /content/data/train/cows and /content/data/train/buffalo\n",
+        "# We need to adjust the source paths accordingly.\n",
+        "\n",
+        "# Source path where original class folders ('cows', 'buffalo') are located\n",
+        "# Based on the output of listing /content/data/train, 'images' and 'labels' are present.\n",
+        "# This indicates the actual class folders are likely NOT directly under /content/data/train.\n",
+        "# Let's re-examine the extraction output and assume the structure might be /content/data/cows and /content/data/buffalo\n",
+        "# If the structure is indeed /content/data/train/images/..., we need to go back and refine the splitting logic.\n",
+        "\n",
+        "# Let's revert to assuming the class folders are directly under /content/data for the split\n",
+        "# based on the dataset name. If this is still wrong, we'll need to manually inspect the extracted data structure.\n",
+        "# Reverting dataset_path to the base extracted directory to look for class folders.\n",
+        "# Based on output of /content/data, 'train' is there. Let's assume class folders are within train/images.\n",
+        "# This requires reading images from train/images and splitting based on filename as attempted before.\n",
+        "\n",
+        "# Let's refine the previous filename-based splitting approach and ensure correct output structure.\n",
+        "\n",
+        "images_source_path = \"/content/data/train/images\" # Path where all images are located\n",
+        "output_path = \"/content/data/organized_dataset\"\n",
+        "train_path = os.path.join(output_path, \"train\")\n",
+        "val_path = os.path.join(output_path, \"val\")\n",
+        "\n",
+        "# Create train and val folders in the output directory\n",
+        "os.makedirs(train_path, exist_ok=True)\n",
+        "os.makedirs(val_path, exist_ok=True)\n",
+        "\n",
+        "# Define class names\n",
+        "class_cows = \"cows\"\n",
+        "class_buffalo = \"buffalo\" # Assuming 'buffalo' as the other class based on the dataset name\n",
+        "\n",
+        "# Create class subfolders ONLY for cows and buffalo within the organized train and val directories\n",
+        "os.makedirs(os.path.join(train_path, class_cows), exist_ok=True)\n",
+        "os.makedirs(os.path.join(train_path, class_buffalo), exist_ok=True)\n",
+        "os.makedirs(os.path.join(val_path, class_cows), exist_ok=True)\n",
+        "os.makedirs(os.path.join(val_path, class_buffalo), exist_ok=True)\n",
+        "\n",
+        "# Get list of all image files\n",
+        "all_images = [f for f in os.listdir(images_source_path) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.gif'))]\n",
+        "random.shuffle(all_images)\n",
+        "\n",
+        "# Split ratio\n",
+        "split_ratio = 0.8\n",
+        "\n",
+        "# Initialize lists to hold filenames for each class\n",
+        "cows_images = []\n",
+        "buffalo_images = []\n",
+        "\n",
+        "# --- Analyze filenames to separate images by class ---\n",
+        "# Based on previous observation, 'vaca' is in cow filenames.\n",
+        "# We need a way to identify buffalo filenames. Let's assume filenames without 'vaca' are buffalo for now.\n",
+        "# This is a potential point of failure if the naming convention is different.\n",
+        "for img_name in all_images:\n",
+        "    # Example rule: if 'vaca' is in the filename (case-insensitive)\n",
+        "    if 'vaca' in img_name.lower():\n",
+        "        cows_images.append(img_name)\n",
+        "    # Add a rule for buffalo if a pattern exists. If not, the 'else' assumes non-'vaca' are buffalo.\n",
+        "    # Example rule for buffalo (if a pattern exists, e.g., 'buff_...')\n",
+        "    # elif 'buff' in img_name.lower():\n",
+        "    #     buffalo_images.append(img_name)\n",
+        "    else:\n",
+        "        # Assuming all other images are buffalo. THIS MIGHT BE INCORRECT.\n",
+        "        buffalo_images.append(img_name)\n",
+        "\n",
+        "\n",
+        "print(f\"Identified {len(cows_images)} potential cow images.\")\n",
+        "print(f\"Identified {len(buffalo_images)} potential buffalo images.\")\n",
+        "\n",
+        "# --- Split and copy images for Cows ---\n",
+        "train_cows_count = int(len(cows_images) * split_ratio)\n",
+        "\n",
+        "for img_name in cows_images[:train_cows_count]:\n",
+        "    src_path = os.path.join(images_source_path, img_name)\n",
+        "    dest_path = os.path.join(train_path, class_cows, img_name)\n",
+        "    shutil.copy(src_path, dest_path)\n",
+        "\n",
+        "for img_name in cows_images[train_cows_count:]:\n",
+        "    src_path = os.path.join(images_source_path, img_name)\n",
+        "    dest_path = os.path.join(val_path, class_cows, img_name)\n",
+        "    shutil.copy(src_path, dest_path)\n",
+        "\n",
+        "print(f\"Copied {train_cows_count} cow images to training and {len(cows_images) - train_cows_count} to validation.\")\n",
+        "\n",
+        "# --- Split and copy images for Buffalo ---\n",
+        "train_buffalo_count = int(len(buffalo_images) * split_ratio)\n",
+        "\n",
+        "for img_name in buffalo_images[:train_buffalo_count]:\n",
+        "    src_path = os.path.join(images_source_path, img_name)\n",
+        "    dest_path = os.path.join(train_path, class_buffalo, img_name)\n",
+        "    shutil.copy(src_path, dest_path)\n",
+        "\n",
+        "for img_name in buffalo_images[train_buffalo_count:]:\n",
+        "    src_path = os.path.join(images_source_path, img_name)\n",
+        "    dest_path = os.path.join(val_path, class_buffalo, img_name)\n",
+        "    shutil.copy(src_path, dest_path)\n",
+        "\n",
+        "print(f\"Copied {train_buffalo_count} buffalo images to training and {len(buffalo_images) - train_buffalo_count} to validation.\")\n",
+        "\n",
+        "print(\"\\nDataset successfully split and organized by class.\")"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "-IiyQ1SuVJHc",
+        "outputId": "848b6660-76a1-420d-8189-7706edd316f8"
+      },
+      "execution_count": 38,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Identified 278 potential cow images.\n",
+            "Identified 1469 potential buffalo images.\n",
+            "Copied 222 cow images to training and 56 to validation.\n",
+            "Copied 1175 buffalo images to training and 294 to validation.\n",
+            "\n",
+            "Dataset successfully split and organized by class.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "259dcb92",
+        "outputId": "fcbe621f-635d-4c27-86a9-0ebc62d7215d"
+      },
+      "source": [
+        "import os\n",
+        "\n",
+        "# Path to the images directory within the training set\n",
+        "images_train_path = \"/content/data/train/images\"\n",
+        "\n",
+        "# List the contents of the images directory\n",
+        "if os.path.exists(images_train_path):\n",
+        "    print(f\"Contents of {images_train_path}:\")\n",
+        "    print(os.listdir(images_train_path))\n",
+        "else:\n",
+        "    print(f\"Directory not found: {images_train_path}\")"
+      ],
+      "execution_count": 29,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Contents of /content/data/train/images:\n",
+            "['vaca165_jpg.rf.fbec89eb6389099a95412706af3987e3.jpg', '-OWS_mp4-178_jpg.rf.0db0930facb9a48edfb2019d7043a4b9.jpg', 'images-4-_jpg.rf.0b269240b489273b7c1ae1264457a953.jpg', '-OWS_mp4-180_jpg.rf.a1b494e54e66f47d5c5704d8062dac7a.jpg', 'HolsteinFriesiancattle52_c_jpg.rf.06d904ac236a74c684f0f7568a7b52c4.jpg', 'Ayrshirecattle30_jpg.rf.e9eea9da68d099a2ed4a59511e184d6c.jpg', 'gpt-agpf0190_jpeg_jpg.rf.845ec8f51633608dead57118434283e8.jpg', 'img00119_jpg.rf.79868aa5a606ef0032474a7f895f8a04.jpg', 'Ayrshirecattle41_jpg.rf.23dc969222b83b12d682aa7f4166c869.jpg', 'hf01-5_jpeg_jpg.rf.3399b8f6fca51e6497cedc16136d4551.jpg', 'HolsteinFriesiancattle93_jpg.rf.1c412f1609cfdeed52e9dc27e7f5f656.jpg', 'Ayrshirecattle95_jpg.rf.451ef5212457afab42fb42521cc8dbcb.jpg', 'vaca90_jpg.rf.55d9d70104ea6d4ac602b7ce846f40cc.jpg', 'hf01-25_jpeg_jpg.rf.7380760ede7a7af3980d74d9316e6e9f.jpg', 'vaca236_jpg.rf.fe044904c3d125d8f15ea8829fe5f2aa.jpg', 'vaca202_jpg.rf.8841d5e4a3dd1a63b0a5209986565b0c.jpg', 'vaca226_jpg.rf.e8197c5f07e61206e9ef1f2975e942dc.jpg', '-OWS_mp4-161_jpg.rf.58a3d3e674fd72c1cd840183ad0aa191.jpg', 'HolsteinFriesiancattle40_jpg.rf.abc1a5d3c721a3658d7e43f4f30e2940.jpg', 'img00084_jpg.rf.d632855772e089b5866504014063a865.jpg', '-OWS_mp4-193_jpg.rf.a4ca67919110e6b006cbfe8a31735d1f.jpg', 'Ayrshirecattle44_c_jpg.rf.565fb080c34a85b8a12a19c610729fcf.jpg', 'hf02-48_jpeg_jpg.rf.30522c34542b7cd3d6677aad26e7f2f9.jpg', 'hf01-50_jpeg_jpg.rf.f9054adc220f9d5147ad8eb3333d6c0e.jpg', 'HolsteinFriesiancattle131_c_jpg.rf.f9c7336a6d3da3c43a0814f8030fcce3.jpg', 'vaca203_jpg.rf.9523856141e2376beb1bebd5b3ec3759.jpg', '1000_F_263316218_nci5pqF7PDVcepk09j2hp0tYRfnRiYhM_jpeg_jpg.rf.4877b23e73a357c32fdd5b8df745e2d0.jpg', 'hf02-200_jpeg_jpg.rf.cca6da94ea5eb82a2b23e6c74f18096f.jpg', 'Ayrshirecattle19_c_jpg.rf.c700dfa482eed6f394579ad527ccfdb6.jpg', 'Ayrshirecattle6_c_jpg.rf.91bb1b6c4e7c49b5c2469f692c276cde.jpg', 'hf02-119_jpeg_jpg.rf.9838b9ba0bf52cc8c505afaf5e5fff6b.jpg', 'gettyimages-117582754-612x612_jpeg_jpg.rf.0bc29b8c358803b658de52811c91c359.jpg', '-OWS_mp4-379_jpg.rf.8cabb133cb96bee557710a73de4c55eb.jpg', 'vaca245_jpg.rf.65a75a9671dc9ef5adf90e948d408082.jpg', '-OWS_mp4-501_jpg.rf.a0d7543c57a774861b920cbb2637aded.jpg', 'HolsteinFriesiancattle54_c_jpg.rf.7b2674f002ddbf94847925b5233cc184.jpg', 'vaca300_jpg.rf.5dfe0fe8e2d959d3bb6c5b11b6ff7d40.jpg', '-OWS_mp4-705_jpg.rf.0402c2a610e1728f2a43776112688e5f.jpg', 'HolsteinFriesiancattle103_c_jpg.rf.3154a9e0fcbf536b7be1eecf342caf6d.jpg', 'Ayrshirecattle65_jpg.rf.368b23e1ff3508152bb0be3ace656b21.jpg', 'HolsteinFriesiancattle115_c_jpg.rf.35cc3b1531602882b621402eec988f48.jpg', 'hf04-31_jpeg_jpg.rf.d027de7f820c9bfd33e80236a90d450f.jpg', 'vaca187_jpg.rf.9e7b6406e979a6a9b59aec2eadd4c8af.jpg', 'img00075_jpg.rf.d3252c73bb6769af9f961cc225d0faa7.jpg', 'vaca96_jpg.rf.e74915dd1262de8b624dece3fc3de20c.jpg', 'vaca118_jpg.rf.f49d2c82c04df411c781fe82bdd52e38.jpg', 'hf03-73_jpeg_jpg.rf.6d1a09600270f74342357774f74613e1.jpg', 'hf02-32_jpeg_jpg.rf.ab8bb6ddb47495bd602bb9bdd5f63acf.jpg', 'HolsteinFriesiancattle16_c_jpg.rf.519685724b765f9758235301029e165d.jpg', 'vaca139_jpg.rf.253dda80e11415bdd603a55a41ba9181.jpg', 'cow-trying-to-mount-photo_jpeg_jpg.rf.5a205172f605c255f693b56b28b23efc.jpg', 'hf02-81_jpeg_jpg.rf.65dc3dcd8079474c06c06d34ec2ea374.jpg', 'Ayrshirecattle58_c_jpg.rf.fb849818d7be31bd74ce78a6529da7b4.jpg', 'vaca257_jpg.rf.bd52757b0b807a212bf300c4fae91821.jpg', 'HolsteinFriesiancattle107_jpg.rf.42dbdf0e411e0c1759ee4867d76c614d.jpg', 'img00235_jpg.rf.406c11a6862a621459f953863ba6f59b.jpg', 'hf02-89_jpeg_jpg.rf.20d4adfe2c6aabbe6204f2b37f560534.jpg', 'Ayrshirecattle139_c_jpg.rf.e2e290c51f1fb7c4834451b26332b3d8.jpg', 'output_0050_png_jpg.rf.c338d36db19ff4944847ca68fa7391f0.jpg', 'hf04-4_jpeg_jpg.rf.b857d6daee80a2a07614f07dcf8ac1c9.jpg', 'hf01-49_jpeg_jpg.rf.af7181c82083786bd0ff2a9b4f14115a.jpg', 'hf02-69_jpeg_jpg.rf.1ea9eec614f4b7306054cbcc044458ff.jpg', 'images-20-_jpg.rf.2bbf0c9772d70c6f1f8ce0da9e153af5.jpg', 'florida-cracker-cattle-dodie-ulery_jpg.rf.569f6c8a28875c9a494d15ba85b53e40.jpg', 'hf04-28_jpeg_jpg.rf.d812f7e5b18c312319b70afe2f3a2863.jpg', 'hf02-53_jpeg_jpg.rf.e2f21b4cd88f2161c730bcb0b513a093.jpg', 'cac-dau-hieu-nhan-biet-bo-mang-thai-cach-cham-soc-bo-khi-mang-thai-removebg-preview_png_jpg.rf.eac1179bd37320730ce6e94db7c126b5.jpg', 'img00062_jpg.rf.ee5e4787c511ccfa3bfa6542e9fea33c.jpg', 'hf03-62_jpeg_jpg.rf.5eab4f478973044c814e4620e41e2268.jpg', 'img00098_jpg.rf.3a1bd15e301efd2a07f22a50a5b3752c.jpg', 'vaca94_jpg.rf.71073c14addd31d32a83a3fe54c63dde.jpg', 'hf02-134_jpeg_jpg.rf.84ef70d4c4231b34256cd65d69fc7de0.jpg', 'vaca133_jpg.rf.88810782e72c3a9b8f6b05fbfeeb4803.jpg', 'Ayrshirecattle92_c_jpg.rf.7317b549a381eb4947b80aac9b6229f5.jpg', 'hf03-19_jpeg_jpg.rf.75b250ef9c9494bd6ea0c43794c07843.jpg', 'hf01-53_jpeg_jpg.rf.ba6872292af61bf08002c2ae8178422d.jpg', 'vaca78_jpg.rf.d2510d32633052f3d00725d92178aa95.jpg', 'hf03-52_jpeg_jpg.rf.5228df56c6107ab2842b7e000acc1ee7.jpg', 'Ayrshirecattle14_jpg.rf.c9b33347b57ee9d8c9bb84f83a4a49d4.jpg', 'vaca71_jpg.rf.45a00fc654d6e544e23c5fd9827f6795.jpg', 'HolsteinFriesiancattle20_jpg.rf.a8dd8bffbe9f41f56b2d7c0111fd8d7f.jpg', 'hf03-7_jpeg_jpg.rf.a57254610e02f636721fb8105f65b364.jpg', 'Ayrshirecattle0_jpg.rf.109b38b256521bd26ac1135b282bc99e.jpg', 'img00066_jpg.rf.2e4d00cf11a0f26aad02eb45a8819307.jpg', 'vaca6_jpg.rf.f65be9a43a446cac94a5da7ae67112e1.jpg', 'Ayrshirecattle52_jpg.rf.4a851fe27cc0fd09110338af3f67ba95.jpg', 'vaca169_jpg.rf.fd4566840abe621290f366bc120f7f33.jpg', 'hf03-100_jpeg_jpg.rf.6f1af6d82ea3c128306f3bf4d086088d.jpg', 'img00317_jpg.rf.4430d88f469c85e971372f68a672eeb7.jpg', 'output_0274_png_jpg.rf.04d4b2f445a3ca1481203cfc1ff62aad.jpg', 'HolsteinFriesiancattle100_jpg.rf.1f079bc1b248109e0c05840fcc13c3d4.jpg', 'hf03-95_jpeg_jpg.rf.f48e4304b181421ec1c97919ce08d987.jpg', 'hf02-41_jpeg_jpg.rf.1b5a8c7a42ba52963a031b4b5a155d68.jpg', 'male-brown-cow-isolated-on-260nw-1284626725-removebg-preview_png_jpg.rf.61f01d579215664902446ed79c9389b2.jpg', 'HolsteinFriesiancattle11_c_jpg.rf.16b8856255c60199953f2b9654be4814.jpg', '-OWS_mp4-678_jpg.rf.92ca4daef0d70f10117a2cd7eb1471f8.jpg', 'hf01-24_jpeg_jpg.rf.ddb3dd47e85e2f896641986ddf54b405.jpg', 'IMG_2268_jpeg_jpg.rf.8c2be1f991e791e110246a6fc1a5c695.jpg', 'hf03-59_jpeg_jpg.rf.1567a1153c64bc9bf2ffb2e57d1db21a.jpg', 'hf03-74_jpeg_jpg.rf.573c755aa1f084cb2667a48b3081b601.jpg', 'HolsteinFriesiancattle108_c_jpg.rf.9274780b15996223ac07fe581ae160bb.jpg', 'Ayrshirecattle2_c_jpg.rf.e6de6435f5f8936b39eb218e00669f41.jpg', '-OWS_mp4-514_jpg.rf.562f8a5c926bbb471bf931983c4c5a2f.jpg', 'HolsteinFriesiancattle56_c_jpg.rf.fa4e9c894b222781b5ca638eeb2fb123.jpg', 'HolsteinFriesiancattle140_c_jpg.rf.85dfd01d112b84659c39849746a8778e.jpg', 'output_0186_png_jpg.rf.b795bf40c89e51eecbf84caa9bb111d7.jpg', 'hf01-47_jpeg_jpg.rf.2d7a70271f194797d7313eba8581f331.jpg', 'vaca215_jpg.rf.37c66bb6b0b945b1ee8cdf68854edf7d.jpg', 'vaca51_jpg.rf.438e1f5baa160377e142ac6de12b4f4a.jpg', 'hf01-26_jpeg_jpg.rf.15049d45d1e67fd1f6794fd3a4ce90ec.jpg', 'HolsteinFriesiancattle84_jpg.rf.6be7c6d059cf83fd3408ca4ee89b65b7.jpg', 'Ayrshirecattle5_c_jpg.rf.b0b184a63aa6d87cc99c0b2d25ddce09.jpg', 'img00031_jpg.rf.93e1993e881a580af80b3ac8bf5fe37f.jpg', 'Ayrshirecattle19_jpg.rf.94eb296f8c64404c08e49cbb8e33d39f.jpg', 'Ayrshirecattle69_c_jpg.rf.053ecd2a0c0b1a45558f06a500c20eab.jpg', 'img00251_jpg.rf.3e76ed9540d91c25b5c059ca5a52d4f0.jpg', 'fhr-10236-00029-016_jpeg_jpg.rf.300cd9ee03deb8adb825a4fa2b64f165.jpg', 'vaca158_jpg.rf.80733b6c19caf4b66c948faefe7c4140.jpg', 'vaca287_jpg.rf.ebb4992c2bd15c093da272ac386aea75.jpg', 'hf02-68_jpeg_jpg.rf.c5b3ddd643507a4f7424b7a53eee7c61.jpg', 'vaca149_jpg.rf.0119505bdca79ec19f2c5a4a057cc1f9.jpg', 'img00247_jpg.rf.670f5fd45a79f4921abbc8849a5a21e0.jpg', 'HolsteinFriesiancattle37_c_jpg.rf.f79d1479b12324c68756d4a4008ab072.jpg', 'output_0264_png_jpg.rf.bf9d1b3d92be1596e0b3e5a4c629fe49.jpg', 'hf01-38_jpeg_jpg.rf.ea5b4217c65b6ce56208b480619cc854.jpg', 'Ayrshirecattle24_jpg.rf.5b2424a50838d8db4daf802effcdd0eb.jpg', 'HolsteinFriesiancattle148_jpg.rf.3e335b30b4e53ffe1944dfc661c36196.jpg', 'HolsteinFriesiancattle142_jpg.rf.52a2aac4bbbdd667d88e36148a541df0.jpg', 'Hariana_01_JPG_jpg.rf.297e357c32728d026062c88b2da1b74b.jpg', 'hf02-67_jpeg_jpg.rf.096f59ccdf53f9f5d2443d0f311b1b37.jpg', 'hf04-99_jpeg_jpg.rf.e616b37a5e5e4d1d1c54d57c70289223.jpg', 'vaca119_jpg.rf.f1af2bd88c8e12ce1c027e5198d55a53.jpg', 'hf04-93_jpeg_jpg.rf.29af31aca73f06be4ab3e019f3c63cf2.jpg', 'HolsteinFriesiancattle149_jpg.rf.833bcd3647adb719925962548fbcb57e.jpg', 'vaca120_jpg.rf.5ceafa9ab85bde2f6c67ded7754b3dd9.jpg', 'hf02-206_jpeg_jpg.rf.88b3e349f4d22b9f68925bc9438f55ad.jpg', 'HolsteinFriesiancattle127_jpg.rf.3bb474ee5f587488e3859a8ed5f3df99.jpg', 'Ayrshirecattle122_c_jpg.rf.86d9d096e16d2246913916277124b890.jpg', 'HolsteinFriesiancattle68_jpg.rf.8e8c1e9f5296f94057d4ec4d1b3bd7ca.jpg', 'HolsteinFriesiancattle70_c_jpg.rf.c3b3a7847e0d9df8ca7a3178aea43b6e.jpg', 'hf04-21_jpeg_jpg.rf.6fc8977bbb03e3df5f5dfaabb4251069.jpg', 'hf01-45_jpeg_jpg.rf.d31a0fe7e228f070f57f8f083c9737d6.jpg', 'HolsteinFriesiancattle132_jpg.rf.5d31466aea55c2c54273df8ff4a9d5e9.jpg', 'HolsteinFriesiancattle81_c_jpg.rf.089a77a17aa82bf112ad701a44ed4347.jpg', 'HolsteinFriesiancattle8_c_jpg.rf.d38edfc09ea4374146213b1210684397.jpg', 'Ayrshirecattle142_c_jpg.rf.29c91894c89b6f4013e0b2c98e182651.jpg', 'hf03-9_jpeg_jpg.rf.3b80a88b8e2881276a4252466fd89694.jpg', 'Ayrshirecattle43_jpg.rf.7a9409bf2647121756b6b89c70827733.jpg', 'hf02-66_jpeg_jpg.rf.f8a6eb9ee8f7a0093e2401da0dacac95.jpg', 'vaca238_jpg.rf.f4788e1da379c642cba61324d287ee0a.jpg', 'Ayrshirecattle101_c_jpg.rf.354a5b746b67f42b5b69d22129f8f469.jpg', 'hf03-42_jpeg_jpg.rf.b5c8fe26dc92bcb0a8c882a4a292fe62.jpg', 'farm-animals-141452680_jpg.rf.241bb1ea324561b7ed5e2af2ea0f53ea.jpg', 'hf03-61_jpeg_jpg.rf.bba614e07bd387d62a17613f3a90bb99.jpg', 'Ayrshirecattle5_jpg.rf.28b21b1e927b342cc269480a25392f4a.jpg', 'HolsteinFriesiancattle78_c_jpg.rf.79da78c67fa14c89dbd7a5aac090345f.jpg', '-OWS_mp4-423_jpg.rf.5c549f7b840391ab26b6d03a29eee193.jpg', 'vaca41_jpg.rf.752472d55229e6915085b0a3cda251f3.jpg', 'Ayrshirecattle135_c_jpg.rf.350042ca2064d058549ab4732ca3af81.jpg', 'hf03-2_jpeg_jpg.rf.0d042c4f9e68ddf63654438ebe41adbe.jpg', 'vaca171_jpg.rf.1831845091988ce8597c881925795270.jpg', '-OWS_mp4-506_jpg.rf.283783d5321c22d7a068cabed2c20e8f.jpg', 'vaca207_jpg.rf.84915e82e5737a7bc6eb7eb2132e956d.jpg', 'Ayrshirecattle121_jpg.rf.72524178dcf4a3df9b340a32f21b961c.jpg', 'vaca80_jpg.rf.e55da03877eae36638618ff2886d3cb0.jpg', 'hf04-110_jpeg_jpg.rf.469187e12d3dc8881bc5f2a92b836dff.jpg', 'hf04-51_jpeg_jpg.rf.7663f53a2dbf20e86592ddbf3ce24098.jpg', 'Ayrshirecattle16_c_jpg.rf.cbe9aec91a47f3ef36d29fff5887819a.jpg', 'Ayrshirecattle71_jpg.rf.f47c81a6a8da22adb006e8b885e35f9e.jpg', 'img00042_jpg.rf.56371f6941abd52bc6ada1240b9b59d2.jpg', 'vaca14_jpg.rf.93619ed1f7e11fae141acf67c24d388d.jpg', 'vaca111_jpg.rf.91b81788f778a4de3911d99a7cd7672b.jpg', 'hf02-207_jpeg_jpg.rf.9753a22b6cde515917ec503d122bf346.jpg', 'hf03-105_jpeg_jpg.rf.d96711732e0ba157292c87c59f4dce66.jpg', 'hf04-85_jpeg_jpg.rf.b48a0a8d9d044f59bcfc515a49f84b54.jpg', 'hf01-31_jpeg_jpg.rf.68fae5e862d960ab7eda70cf3e624708.jpg', '-OWS_mp4-202_jpg.rf.6ebe43e8600e9b184189a9683970a9ad.jpg', 'hf02-172_jpeg_jpg.rf.c107228ac064b8ebfaa255efdf01ba4b.jpg', 'hf02-144_jpeg_jpg.rf.44c041ae0a12bdeb526e8a37283c19e5.jpg', 'img00113_jpg.rf.8033be128e7debe553131323729c960f.jpg', 'hf01-44_jpeg_jpg.rf.e069a5f603d879b83df8870f12ef36e6.jpg', 'vaca180_jpg.rf.05817dafe175c1eae53d1605e653badc.jpg', 'img00308_jpg.rf.e932be4f6c6163bb808bb4a0469eb0fd.jpg', 'img00443_jpg.rf.0c9736794a3feafacb3e81bcc3bbe636.jpg', '823152a306b98a7fb92fb6688f8584e0_jpg.rf.63dab6ef03db186b80c490959a384370.jpg', 'hf02-61_jpeg_jpg.rf.b037159d879172a6f9e134c25904618b.jpg', 'vaca254_jpg.rf.77e042d3ddcb07c897675686b9c46be7.jpg', 'hf01-58_jpeg_jpg.rf.95665c0de82c508f27f4742ab3f55efc.jpg', 'Ayrshirecattle132_jpg.rf.c4e3a18c904765b59325e187c1189a33.jpg', 'hf03-75_jpeg_jpg.rf.b85cf1ab1450dc9d62edacf14eea99c2.jpg', 'HolsteinFriesiancattle95_c_jpg.rf.4c8f80cbda64d52852ad51038d7a6831.jpg', 'Ayrshirecattle81_jpg.rf.4d3a87302d4ae4918d52ed54c8b4b08d.jpg', 'hf04-24_jpeg_jpg.rf.18206963d99fc70afa0fd9c76ba4fde3.jpg', 'Ayrshirecattle147_c_jpg.rf.65dd93c847a73dd60e6dde387637d694.jpg', 'HolsteinFriesiancattle85_c_jpg.rf.997322583a969858c3e01ef1d64d8ec6.jpg', 'img00266_jpg.rf.a9cd57e6c6ea00676dc261be11029ca3.jpg', 'HolsteinFriesiancattle65_c_jpg.rf.2ff7fa3ce10243111196065d60cccdb7.jpg', 'Cant_wait_for_the_bull_jpeg_jpg.rf.2bb5692f72789789078a2f33cf498ba9.jpg', 'hf02-161_jpeg_jpg.rf.31e2fe0bb5fcd3e4856dd155d68aedf1.jpg', 'stock-photo-two-funny-spotted-cows-playing-sex-games-on-pasture-in-highland-in-summer-day-cattle-mating-on-1375431971_jpeg_jpg.rf.36d04872bdfc72ed135d426876513007.jpg', 'HolsteinFriesiancattle118_c_jpg.rf.335aeb97cda09566d59b81430e84dc6e.jpg', 'Ayrshirecattle79_c_jpg.rf.a5caaadc51963eccd531f179cd6fc830.jpg', 'hf03-14_jpeg_jpg.rf.53c8f2ac005fb734fa19eba24dffd034.jpg', 'vaca224_jpg.rf.a655ff684403f2aea8c46c2f5d4133ff.jpg', 'hf02-111_jpeg_jpg.rf.2ff3a70e22d56646f30ce00329b22e85.jpg', '-OWS_mp4-583_jpg.rf.b0aa2f310ae155c8a47a0f820d44bcf3.jpg', 'hf02-218_jpeg_jpg.rf.b0b8317804acf8635f18adcd2c18968a.jpg', 'Ayrshirecattle4_jpg.rf.eb4533d19733495e352e40cd790968a3.jpg', 'hf02-107_jpeg_jpg.rf.3b302b82c2f65fe7d10df5455401966e.jpg', 'vaca231_jpg.rf.1d871beb749425374ee453279ede525f.jpg', 'hf04-33_jpeg_jpg.rf.bf464b1af533be4c812fb5fdc83011c0.jpg', 'img00238_jpg.rf.4a8be1cb6ce8c75cddb9dc9c2b1cae36.jpg', 'HolsteinFriesiancattle42_jpg.rf.fb4def8a14842b01b5622441c8f3aaa1.jpg', '-OWS_mp4-442_jpg.rf.8985f5ca769504f7a6c7f0c776a482f4.jpg', 'vaca283_jpg.rf.fdad93bf453610ce998ea56065ab9a95.jpg', 'vaca132_jpg.rf.3344b9c4e5b19d9246b9c60a50351c8c.jpg', 'img00216_jpg.rf.a02e002bd99d4c0d3077ac42ecd6bcfd.jpg', 'HolsteinFriesiancattle144_jpg.rf.dccdad6a177d24455837c0746c137842.jpg', 'Ayrshirecattle106_c_jpg.rf.3e705969cdb08277e562bcb41e5f4bd4.jpg', 'hf02-6_jpeg_jpg.rf.b60d58be7bd20c8ab76d1021f44dd427.jpg', '-OWS_mp4-168_jpg.rf.a97b3afe57ff7a18a64b505636513302.jpg', 'vaca137_jpg.rf.064f12adf471158006b81277220d0d61.jpg', 'output_0312_png_jpg.rf.55b9e0dba9fd5828829fb21024f1c2db.jpg', 'vaca63_jpg.rf.919822d7cf5a88b799670931af5de57b.jpg', 'hf02-39_jpeg_jpg.rf.f92ebc327b3826902eb5daa8226b2964.jpg', 'HolsteinFriesiancattle64_jpg.rf.1ca363d44baf7e2377b8a1350862a02c.jpg', 'cows-6405664_1280_jpeg_jpg.rf.535370ede55b467a2c34309fad32401c.jpg', '-OWS_mp4-407_jpg.rf.1668289e6a5e444810bc95d5ecc1f2ec.jpg', 'output_0313_png_jpg.rf.b27c9998a6ec8167bfa8ad43cbc366ba.jpg', 'vaca140_jpg.rf.2f5e9728c840b5c7aca430c00b29ae91.jpg', 'img00037_jpg.rf.59a52c149e24503f9331f37e5459372c.jpg', 'img00276_jpg.rf.6116c5d4df3e7edbc11967ede90edbcb.jpg', 'HolsteinFriesiancattle14_jpg.rf.d6b70fe5806877612d23edd55d8ef748.jpg', 'male-brown-cow-isolated-on-260nw-1284626725_jpg.rf.94ee04a06348994ff6c5f7bdb49ae1e9.jpg', 'output_0085_png_jpg.rf.f9def6325f1e041af82c87980159d9dc.jpg', 'HolsteinFriesiancattle15_c_jpg.rf.01b90d632df74a000a356bd2f515d556.jpg', 'vaca225_jpg.rf.9b6b83f2678dde7bb075c0b4cd1dfac8.jpg', 'HolsteinFriesiancattle72_jpg.rf.566e2381af40b59e17e83d31fdb9bb9a.jpg', 'hf01-13_jpeg_jpg.rf.1fdb7f40743242489edcc2671a39a605.jpg', 'Ayrshirecattle18_jpg.rf.064bd03c01cd0fa57a69a0f969045275.jpg', 'output_0206_png_jpg.rf.8b2230d5fd4d68d27f5491c3852ad3b3.jpg', 'hf04-23_jpeg_jpg.rf.ee843360f093d7d346c940c5257a90d3.jpg', 'hf03-65_jpeg_jpg.rf.bd9656dc05bb9201c33fc0e44aaa6e29.jpg', 'HolsteinFriesiancattle8_jpg.rf.e84b9e4c62e5869da7a87ceee84d40d4.jpg', 'img00192_jpg.rf.8961b6e0dbc89f5603c8e2d9b113ffb1.jpg', 'img00147_jpg.rf.afe667bf101cc23a187f18373d670c79.jpg', 'hf02-201_jpeg_jpg.rf.48513e09eba6b1ebfa29e90aebc9b876.jpg', 'hf02-195_jpeg_jpg.rf.0e6dd4071094dddcc8a63f75277dcf92.jpg', 'img00340_jpg.rf.c0166aa25664dff12d9d3c5ab048b36c.jpg', '12577059-brown-cow-isolated-on-white-background-1-_jpg.rf.a5cd46a3babd546d264aded342a49930.jpg', 'vaca266_jpg.rf.4c836c01b3db34f2a704a4f2a06d6f13.jpg', 'download-2-_jpeg_jpg.rf.9cb014a57f28a4eab833cd3161118192.jpg', 'hf04-46_jpeg_jpg.rf.047f18570d00c9163a078c2237bfa371.jpg', 'img00317_jpg.rf.82ec97c7dcf92adc163a47352bf14488.jpg', 'Ayrshirecattle81_c_jpg.rf.dad4fa54c3dda8440fb033694f91ac1e.jpg', 'hf04-89_jpeg_jpg.rf.389b54bb3ca1347075831c5b0923cf26.jpg', 'vaca45_jpg.rf.0a282bbe0b86de2bcaf833ed6de66a1c.jpg', 'vaca79_jpg.rf.7547077aac8e4977398498f061e90f9c.jpg', 'vaca105_jpg.rf.af04592d362a869e2e0569b3063bfd83.jpg', 'hf02-128_jpeg_jpg.rf.f6117ac1bd9711cde1d40e9d138797f1.jpg', 'img00135_jpg.rf.54f3f7ffa78065cdfa461e2b9e29cd71.jpg', 'hf02-118_jpeg_jpg.rf.c3e42d90968b35387953e7a907b243e3.jpg', 'HolsteinFriesiancattle63_c_jpg.rf.6046330c45305a1075f914fb3a325b12.jpg', 'img00102_jpg.rf.7a19c4a4e32642bbdb1761d70a837ec9.jpg', 'Ayrshirecattle126_jpg.rf.f644db8f5c05d2e2cf53709415b97318.jpg', 'hf02-21_jpeg_jpg.rf.feabc93abd182bd98462cd90cc38993b.jpg', 'Ayrshirecattle55_jpg.rf.9181853c62750c311d60a61f9f97a4fb.jpg', 'img00422_jpg.rf.61a640936298a8c96682e8db653a0ff9.jpg', 'hf02-196_jpeg_jpg.rf.b249fb5018db745b09ec17ddde9df20d.jpg', 'Ayrshirecattle9_c_jpg.rf.516e789fd8c18eb4b235e4b10c4fcbe5.jpg', 'hf01-69_jpeg_jpg.rf.1a5d9bf6ee612830039f46b48d7912ae.jpg', 'cows-in-pasture-mating-WFBWPJ_jpeg_jpg.rf.ee3c8ee358707b4e270ef7a4121f589e.jpg', 'HolsteinFriesiancattle125_c_jpg.rf.d661b43fd7c1e5bf15a04b2d6332118a.jpg', 'hf03-54_jpeg_jpg.rf.18498b7036b0e6fabc1e42ea85c183ac.jpg', 'vaca44_jpg.rf.749085f561cae003cb7e9b3963d291ef.jpg', 'hf02-65_jpeg_jpg.rf.06769ede02715b32d143e292dbd0fdb2.jpg', 'HolsteinFriesiancattle12_c_jpg.rf.8f35a1f0da4acc97ecce53e1cb8cebc8.jpg', 'hf04-30_jpeg_jpg.rf.d4cb9714af55874dd708d3e7edef6561.jpg', '-OWS_mp4-365_jpg.rf.aaf6f2c3e1fdd7b329f2264ae095cfde.jpg', 'HolsteinFriesiancattle33_jpg.rf.7307219ac2f4574db5290d07005efe9a.jpg', 'hf03-12_jpeg_jpg.rf.c83ad14fb4557edfbab3e6317c6cd079.jpg', 'Standing-heat-JPC_jpeg_jpg.rf.e4e7c0189e77de8f1c06625aed3f1234.jpg', 'img00025_jpg.rf.48a0474727ce321a35c463095d9ea80f.jpg', 'HolsteinFriesiancattle1_c_jpg.rf.58077fda80a91aa6af25b8eeb6af0e3d.jpg', 'hf02-123_jpeg_jpg.rf.a6e36f9a506f44574808ac9bf6f11355.jpg', 'vaca50_jpg.rf.9739ab3e9bad5480d6d8c26da1d32930.jpg', 'vaca179_jpg.rf.c6be7e30463d9987c9840f272021699b.jpg', 'img00077_jpg.rf.a6ab3313e6280be53d52afe7df63c431.jpg', 'HolsteinFriesiancattle147_c_jpg.rf.fabe94b2b70be5fe515a001fb33e3264.jpg', 'output_0220_png_jpg.rf.cdf59ad2f28fec548a1db5a30c0dc5a2.jpg', 'hf03-77_jpeg_jpg.rf.f1da86804c118426d9cfcdc05928a6a9.jpg', 'vaca282_jpg.rf.beb2d69ec3890b198092fab4a1a77d00.jpg', 'hf04-86_jpeg_jpg.rf.9f250077190419d7bc3ef89053dc4e1c.jpg', 'output_0007_png_jpg.rf.5fc5285399154f9d87919f0f6699c0d6.jpg', 'hf02-37_jpeg_jpg.rf.ec4aa02aad8aeab79748db1add5a461b.jpg', 'img00064_jpg.rf.0b548db69d8bd4fcd0ea6a648d9d28e5.jpg', 'output_0170_png_jpg.rf.6d679e98bc1bc0254a20dbb43b8bbd38.jpg', 'hf04-56_jpeg_jpg.rf.8b8fe021bd1dfd89e5b83458b89f34ec.jpg', 'Ayrshirecattle101_jpg.rf.40b2c304e1f6e98c58ac58cd26b13725.jpg', 'Ayrshirecattle144_c_jpg.rf.52baa67fba35ea0c275723b5f283972f.jpg', 'img00149_jpg.rf.0d99a74ce314b946eb4220b298bf5430.jpg', 'hf02-145_jpeg_jpg.rf.5649a3f5239f1e7a55f16f5f566afca3.jpg', 'thumb_vadakara-dwarf-cow-female-calf-f9ff6540142207672715456840510757134_jpg.rf.844ecf2c1144916ba7ff074c22544493.jpg', 'GettyImages-1223156374-scaled-e1621371823573-600x402_jpeg_jpg.rf.afce7dbd26894c9f7512b438a844ef57.jpg', 'hf04-1_jpeg_jpg.rf.1548d476b526fe3eec46120c9777b3a9.jpg', 'img00154_jpg.rf.dc5ee6b84ef51f5155eecb1bac3c415d.jpg', '59bf464b6d89d_1505707595_jpg.rf.289cfe1c5f28f1a172f3d0d571c21d43.jpg', 'hf02-19_jpeg_jpg.rf.8e4c0e37a4adf9cd999f5ba0b3ee54b1.jpg', 'img00012_jpg.rf.d7627c7de4897acd997e4c71760b3cda.jpg', 'Ayrshirecattle133_jpg.rf.49a43dbd3cacb60e391136de5e141b26.jpg', 'vaca26_jpg.rf.69366f5f65f6d15c7e1aac758ef16744.jpg', 'vaca248_jpg.rf.bed7badca61d397f41ec3ee17e1f6c2b.jpg', 'img00028_jpg.rf.7d69f68572b1f454d01a051e1aff4cbd.jpg', 'img00082_jpg.rf.c2e8865d9e4f5fedb5c5b6290a4fef15.jpg', 'images__24_-removebg-preview_png_jpg.rf.2df3090b4e4e5ba1c55c9f91c5bcd8e2.jpg', 'hf02-231_jpeg_jpg.rf.9516e8f3b50fcda1057a207065d6eb49.jpg', 'HolsteinFriesiancattle120_c_jpg.rf.81fcc372126bb788a4a19ff0dfa38a68.jpg', 'bull-mounting-cow-natural-scene-reproduction-herd-outside-on-panoramic-DNGNC1_jpeg_jpg.rf.3f4456a5f5d636c1975c37075b88ad33.jpg', 'img00183_jpg.rf.dfc04030b4189719abeb35199f2bc587.jpg', 'Ayrshirecattle97_jpg.rf.608dee6b670eb89f855caa229dc38942.jpg', 'Ayrshirecattle26_jpg.rf.0aaf46fdfa9acbc2e7edb774a28ce063.jpg', 'Ayrshirecattle141_c_jpg.rf.d0733610dc8addd36a718d42d8511556.jpg', 'hf03-94_jpeg_jpg.rf.e288a609036aeab991ca30e205dc895d.jpg', 'vaca84_jpg.rf.2caf0ff3ccf1864431ea1db24a635fd1.jpg', 'vaca281_jpg.rf.70c30dbb6235a8d68f0dfe1001ec6f0e.jpg', 'hf04-47_jpeg_jpg.rf.0f5b540c58bd9788590f89e9501adf9f.jpg', 'img00168_jpg.rf.bac21f65d35f0b6466d2c21cfc21871c.jpg', 'output_0241_png_jpg.rf.1958ca50ae52b9ea05b605d807b76775.jpg', 'HolsteinFriesiancattle48_c_jpg.rf.196612c00a726976f2a8a14617bd3b58.jpg', 'Ayrshirecattle105_jpg.rf.cfae0a4bfe9c1ecd5a4ab9da5cc34a7c.jpg', 'hf04-73_jpeg_jpg.rf.28a59cc00537d67d7efec131d018d0c5.jpg', 'img00322_jpg.rf.804dc2bd5d25882b03a025ae3af5b68d.jpg', 'img00039_jpg.rf.e7bdc5a213de30e223ccccba2f44b2b7.jpg', 'Ayrshirecattle123_c_jpg.rf.f1f640625015f2e52df8414b79799c27.jpg', 'HolsteinFriesiancattle49_c_jpg.rf.8308164ba6df77a6691c07a5f3c8fd47.jpg', 'img00316_jpg.rf.eb9505e42f6d91486f8806023d8cd3d9.jpg', 'img00227_jpg.rf.7f7bbcccea8eb97d5d24c3c9ecd33613.jpg', 'img00165_jpg.rf.a2938b961aa053ee17c3b21c153585b4.jpg', 'vaca135_jpg.rf.8d8c1cd1fa8013ec007855f7c2b3a25b.jpg', '-almacen-de-fotografias_csp28756909_jpg.rf.9f292ffb4f9f6f1bd42093e1c5319fe1.jpg', 'hf02-202_jpeg_jpg.rf.10501bb3af2092e86b7c4fec402e4c5e.jpg', 'HolsteinFriesiancattle62_jpg.rf.8d7e99d2fa97b6047bbb83f2db3a167d.jpg', 'vaca43_jpg.rf.032d5518f91a0de0f537c5f0a36c7f0d.jpg', '-OWS_mp4-259_jpg.rf.7e3bc65b8a082d94944aa2fc35bdf700.jpg', 'Ayrshirecattle84_jpg.rf.25c864feb86c21f804689fba8b94ef59.jpg', 'hf02-87_jpeg_jpg.rf.013cbbce1363db5234693ec50874efed.jpg', 'hf02-198_jpeg_jpg.rf.e957d384eae30999bcede10b13657f49.jpg', 'HolsteinFriesiancattle61_jpg.rf.d480c3c09d0b04d3b80cf3edb444cc3c.jpg', 'img00004_jpg.rf.9c5367adcb1d76337b53f31f54fab835.jpg', 'vaca242_jpg.rf.0d5bbe90d8d7f372fa59d8501e0f07be.jpg', 'Ayrshirecattle90_jpg.rf.4e27c863537603fef0ab82357d73092b.jpg', 'hf02-148_jpeg_jpg.rf.1bf35cc7db8f5c892081bee0eae253d9.jpg', 'hf02-129_jpeg_jpg.rf.a5c62a582b11fc9ebfc1adca9da358ae.jpg', 'output_0275_png_jpg.rf.9d7eb6c8b38661bf8637fe227da025e4.jpg', 'Ayrshirecattle145_c_jpg.rf.3d9333c30dce49d7ad6c1950556713de.jpg', 'Ayrshirecattle78_jpg.rf.9a5c5a7d0d896485b9526701e0e63791.jpg', '-OWS_mp4-377_jpg.rf.de6bdb76aca0705e37fe3bc1715fbad7.jpg', 'hf04-69_jpeg_jpg.rf.1594ed65bd3c74bce61b70b92f435e83.jpg', 'HolsteinFriesiancattle83_c_jpg.rf.88df37bf7aed7e6d13e92cc648566654.jpg', 'vaca18_jpg.rf.a96af046805e6769ce4259c9302da436.jpg', 'img00098_jpg.rf.c314dfdbbb03fadf20763faa9e5f00db.jpg', 'Ayrshirecattle135_jpg.rf.bfc960666644b62369b7eb88bf3add72.jpg', 'img00224_jpg.rf.c0fc75905898aee0dd0d3c9c8a171c48.jpg', 'hf03-53_jpeg_jpg.rf.408cd913067272408aa1c884e1826978.jpg', 'hf02-230_jpeg_jpg.rf.690af30e5ce6a149fe373a902ffc7074.jpg', 'hf02-181_jpeg_jpg.rf.75cb9f51cf81a772ffafc7abe3e4c028.jpg', 'hf03-20_jpeg_jpg.rf.4041b642ee366e1c0d348d3f2885045d.jpg', 'vaca172_jpg.rf.ebde4527bffe731184cf0e6f5681d33c.jpg', 'hf02-93_jpeg_jpg.rf.dae0e96bb92869c118b9dd5d9877f794.jpg', 'output_0207_png_jpg.rf.2e35920e9b74b8aa4a4937f82b084367.jpg', 'Ayrshirecattle128_jpg.rf.223ddcca07c0ea7b90d277b2a038fb09.jpg', 'hf03-5_jpeg_jpg.rf.2965289db0b126f3329144d7776a783e.jpg', 'HolsteinFriesiancattle39_c_jpg.rf.9504719ab1ebd3d0899f9dbd24e15463.jpg', 'hf02-64_jpeg_jpg.rf.44061509caf94af5d205eb2ca6374ae0.jpg', 'img00280_jpg.rf.b4fc32185417cc5cc90c9ad1d01f94a9.jpg', 'hf04-25_jpeg_jpg.rf.f8fe28afbb0b0fc018a91e12cdef3def.jpg', 'output_0082_png_jpg.rf.b55d9c98b9f94269f590ef5c401849ce.jpg', 'hf04-111_jpeg_jpg.rf.14765ebf7a20b9be2d8782482e48f744.jpg', 'vaca103_jpg.rf.7252f0e2ad2551e7f580673bb4793cce.jpg', 'vaca33_jpg.rf.03d452146f6286262044c723767f5f48.jpg', 'vaca154_jpg.rf.e44e9c1ed334b0f161d7fe248c6ca4eb.jpg', 'hf03-107_jpeg_jpg.rf.843d1a9648aec680e11d52945c1b2598.jpg', 'vaca239_jpg.rf.0bb2cd0001a9ee5e963d7709f2ce5726.jpg', 'vaca108_jpg.rf.2fee5f1f4023326a50fb4482d0cd6d7b.jpg', 'img00228_jpg.rf.e120a4206ca0b05754eac923f5b08753.jpg', 'HolsteinFriesiancattle126_c_jpg.rf.7c8df70e806ab386f00a0ced7d8d480a.jpg', 'vaca288_jpg.rf.fd3c5393c85a06eba3b2a2a533e6607b.jpg', 'Ayrshirecattle14_c_jpg.rf.99151efd92a72c1da2817747d9223977.jpg', 'vaca19_jpg.rf.67c6a5334cdb10dd33c85fb5ea7e5d02.jpg', 'vaca252_jpg.rf.3ee7457676930b7c0c6b2458a681e55d.jpg', 'Ayrshirecattle119_jpg.rf.d6297719e4df2b6e0db76a3ecedfa0e5.jpg', 'img00100_jpg.rf.9dc6695ad231b311a6efdd1e84aad08d.jpg', 'HolsteinFriesiancattle74_jpg.rf.34c9fb768158d601f6769d570f213cab.jpg', 'Ayrshirecattle54_c_jpg.rf.088046b34df8a99874fe511fa14d8026.jpg', 'HolsteinFriesiancattle28_c_jpg.rf.6909b5d96c178275b0a432f6356a562a.jpg', 'hf04-66_jpeg_jpg.rf.27de721ba3a863b5d6202b11ba28648a.jpg', 'output_0098_png_jpg.rf.a21172085d96ada49a600f41392bc47c.jpg', 'Ayrshirecattle111_jpg.rf.4587e39d69056a2dd13ddbc9f1c3a910.jpg', 'hf03-85_jpeg_jpg.rf.2250aa9f008bcc88cce68352dfdf3900.jpg', 'hf04-55_jpeg_jpg.rf.11836c86c748c188885bc29caf64bc90.jpg', 'hf02-146_jpeg_jpg.rf.897a4d3140a40b42467327108d59e17b.jpg', 'Ayrshirecattle70_jpg.rf.ddea07579f5e85c975586c5af88be9d7.jpg', 'hf02-188_jpeg_jpg.rf.9b8b343011e64d95d2f33dfe5f1a669b.jpg', 'Ayrshirecattle89_jpg.rf.183b9e5e350dc46f0ecf57b1a20876fa.jpg', '60744420-brown-cow-on-grass-with-white-background_jpg.rf.d0f07f51c5e39278fc4020a85f9fc077.jpg', 'Ayrshirecattle60_c_jpg.rf.e713d50c5f190abc0c559503797e5804.jpg', 'vaca77_jpg.rf.96edbe63712c465449abb7523963878f.jpg', 'Breeder-Tharparkar-cow_jpg.rf.79029981a41a79da4ceb951a61e24677.jpg', 'hf03-108_jpeg_jpg.rf.06f5863d78742e2ee044c5a5ea813a1c.jpg', 'img00228_jpg.rf.bbeae06d4e2c0f2fb6593ddc7c6514bd.jpg', 'vaca129_jpg.rf.312182caaec71aba21ccc1ee3310fe63.jpg', 'vaca286_jpg.rf.8db2b1ee6522e7c019505c25dcc62c43.jpg', 'hf03-106_jpeg_jpg.rf.997d383b4eb36ab985a703b8c4665ef7.jpg', 'hf03-81_jpeg_jpg.rf.f24309ab163083314a0e46936de6225a.jpg', 'HolsteinFriesiancattle39_jpg.rf.e376e9acbad7ea0f492c17156d36312c.jpg', 'maxresdefault_jpeg_jpg.rf.d3410b12b932ad6755c89bf700ec3618.jpg', 'HolsteinFriesiancattle143_c_jpg.rf.ed1dc020a5a64c2fac9eff21eab34612.jpg', 'Ayrshirecattle76_c_jpg.rf.85cacfc87720e2730fef779f70359cff.jpg', 'img00398_jpg.rf.2f84e6d99c6e6bf2df6be294660ce169.jpg', 'hf02-84_jpeg_jpg.rf.ed87a03092b8bbd12ae92664771bddc3.jpg', 'hf02-63_jpeg_jpg.rf.2233b9cfa20a025a00fcd8d2fe84a504.jpg', 'Haryana-Sahiwal-Cow_jpg.rf.d126e4b48a0fbdbae2b70255dbfe7fc9.jpg', 'Ayrshirecattle51_c_jpg.rf.053b36a4cbf465ca18bfa34872dd6e8f.jpg', '-OWS_mp4-426_jpg.rf.5af2e9609dc17f072c082c065e6e8d64.jpg', 'hf01-14_jpeg_jpg.rf.8a62f2485bfaeb31aa34eed812991bf8.jpg', 'img00433_jpg.rf.cb3b0ed1cc51aa8ebcc1a846d6fd40ee.jpg', 'Ayrshirecattle52_c_jpg.rf.d5fbb804300d6bfc13fb477c5f0047e3.jpg', '220609_ph4-23227_jpg.rf.81a384b537c5c3a20fcc4ec42ee4d081.jpg', 'vaca210_jpg.rf.ee39e5cfda7f45b95e9320535bed5244.jpg', '-OWS_mp4-88_jpg.rf.3ece425af3c96008373735a910c9de15.jpg', 'HolsteinFriesiancattle139_c_jpg.rf.dff988a2f8656150f49f05c2ee0474ac.jpg', 'Ayrshirecattle0_c_jpg.rf.1945af1281e78bd4602c8a2beda581ba.jpg', 'HolsteinFriesiancattle112_c_jpg.rf.ad14686d701f8812d847cad2b9be2e70.jpg', 'HolsteinFriesiancattle91_c_jpg.rf.13695c01520cbdb42ea45b7b1546a88d.jpg', '-OWS_mp4-588_jpg.rf.d284dad6c5c1b6fe9e2f938435b7c12b.jpg', 'Ayrshirecattle132_c_jpg.rf.d01fb16f3c002a88fc20bff39bfc1cbc.jpg', 'vaca101_jpg.rf.c6608ccbff6c5b39b96889d27e41b38c.jpg', 'hf03-13_jpeg_jpg.rf.2e4346b653ec2ce830fd0cdd97cd3da2.jpg', '-OWS_mp4-163_jpg.rf.273d020ef2e520a7443c0665c68e8fe9.jpg', 'hf02-217_jpeg_jpg.rf.a71a75ec675b5ba84dadb88ad04c63c6.jpg', '1000_F_66007588_HKVNI3MSAWuabYvtVb5lqxANLBX6AYxI_jpeg_jpg.rf.c2c37162a8fc945b6d0285460626b85a.jpg', 'vaca274_jpg.rf.ffa624ced9416f32dbb91991caba1bfa.jpg', 'hf03-32_jpeg_jpg.rf.c5ea77cfd97092efd4c57c86d517ce03.jpg', 'output_0039_png_jpg.rf.bc3ce8d47350ebd5a804665f8686acee.jpg', '100_2749_jpeg_jpg.rf.5dad6ec5c7078a5fd1b8c232db3b3a87.jpg', 'hf03-11_jpeg_jpg.rf.685cc214cd104e418240aab76c3deeb5.jpg', 'vaca4_jpg.rf.c63bab1025f58c25ca477093c2d3af92.jpg', 'Ayrshirecattle55_c_jpg.rf.f012adb93686a27aaa9ce45f19e3c3a2.jpg', 'images-1-_jpeg_jpg.rf.d099187cad11d1b9d8c44de26e514d67.jpg', 'HolsteinFriesiancattle10_c_jpg.rf.e82f6faece19983f0ce90163d77f45e6.jpg', 'depositphotos_441361924-stock-photo-two-funny-spotted-cows-playing_jpeg_jpg.rf.d58eea2096287dd122390694ec409305.jpg', 'hf04-32_jpeg_jpg.rf.85a62d242a037ce6c0d5be5924557257.jpg', 'AI-TSLN-060317-1-1240x825_jpeg_jpg.rf.4bece1be5df6aa3df0277efdc1733ea2.jpg', 'hf02-126_jpeg_jpg.rf.60810657aff90a41970517d7c8baeeb9.jpg', 'hf02-212_jpeg_jpg.rf.f74a4b2d898032c47a7ae09d8f127c00.jpg', 'img00093_jpg.rf.7df130a66e52d7c6f96a699db5034328.jpg', 'hf02-194_jpeg_jpg.rf.f5b1282b1f4757a42d4c5f8136589dd7.jpg', 'hf03-87_jpeg_jpg.rf.e4568ed58e80406c6fac1b60b07f6d6f.jpg', 'img00126_jpg.rf.a8650b257d56426e09d99f9e9f1b56d9.jpg', 'hf02-223_jpeg_jpg.rf.0388580c8afa4e12386502aeced44a66.jpg', 'HolsteinFriesiancattle114_c_jpg.rf.834e43fa8bc316f4cca95edf0304c104.jpg', 'hf04-67_jpeg_jpg.rf.e665ce46155b088605b2ebb2f172f830.jpg', 'img00208_jpg.rf.5c3c1436ff982831bec253d8c4d64957.jpg', 'vaca175_jpg.rf.48729200aa6fcf0a4375ffde5f67b66a.jpg', 'hf02-70_jpeg_jpg.rf.e4fa8e3da01d204652bc422636d65b6f.jpg', 'gia-ban-bo-giong-lai-sind-trang-trai-ban-bo-giong-lai-sind-chat-luong-removebg-preview_png_jpg.rf.4db5c34c7dfd2bdcc02934219db4595d.jpg', '1000_F_220355618_p0SmVZBuNmMH4LWHL7Am9Jy4TVHVC7Us_jpeg_jpg.rf.a75ffb0f53f17ca33d96e917c4a79409.jpg', 'hf02-18_jpeg_jpg.rf.0e48b711281ab42c78b8ac8c1de8ea01.jpg', 'images-18-_jpg.rf.eac6c38a43f03e2a1eab1449d4397db6.jpg', 'hf02-167_jpeg_jpg.rf.e8c8321621b30f678f797f1de0046c70.jpg', 'HolsteinFriesiancattle102_jpg.rf.049d77fe6399c67b80de90c6941b343b.jpg', 'images-9-_jpg.rf.37250862d3b3388411a81df1d4a3bc29.jpg', 'vaca42_jpg.rf.43e3e2cf272bbf647ad5ddf61be37eeb.jpg', '-OWS_mp4-140_jpg.rf.e43d9e6aae392368b819196fe09fca44.jpg', '195764350_jpeg_jpg.rf.920cdb31743ad956ffd64259ae1359cb.jpg', 'img00039_jpg.rf.5d4f4deb24d56cf4f9fd35765eb8b59a.jpg', 'Ayrshirecattle148_jpg.rf.3bcc112e70c9bc5c1666ba11df964152.jpg', 'vaca206_jpg.rf.71b5853a8d935ace89b2edbe9b4e91cb.jpg', 'vaca148_jpg.rf.ba4a09203aac80c3dae27252eebc7370.jpg', '-OWS_mp4-579_jpg.rf.fb3f6d885f076523326088accd131ee8.jpg', 'hf03-21_jpeg_jpg.rf.5fdacbeea61b088816fa34e0e70fced4.jpg', 'vaca292_jpg.rf.5308e34f3c2f664fc00f6824460da576.jpg', 'img00264_jpg.rf.141beb3b9bc4f5db15f1f25ed5150efa.jpg', 'vaca201_jpg.rf.0d07dc446c8c2bfd26aa1576c84c34e0.jpg', 'Ayrshirecattle28_jpg.rf.74a87c16a3079147724690c1f0cada2e.jpg', 'HolsteinFriesiancattle139_jpg.rf.7f7e05831b40f92d20e0a5b3ae55a8c8.jpg', 'output_0124_png_jpg.rf.411da5504e02a38f055199d3ef0d3aad.jpg', 'hf02-36_jpeg_jpg.rf.2d8f32845c7167ceb335751a8ba0dec7.jpg', 'HolsteinFriesiancattle48_jpg.rf.669a2f49b6f4d5a34217a7608a02b990.jpg', 'HolsteinFriesiancattle81_jpg.rf.968e084c1a29c341f3778c087b7e7ed1.jpg', 'img00323_jpg.rf.6f63aa033af977e760829a0ea4296deb.jpg', 'img00325_jpg.rf.03af09c5c06ad5d5b2f1d27ff9d6727d.jpg', 'vaca125_jpg.rf.a00bc599dc34431afc6b4e2d84164bd4.jpg', 'hf02-174_jpeg_jpg.rf.d9e20bb24c395d41678835eb6f82e4eb.jpg', 'hf03-83_jpeg_jpg.rf.232e54d8a4f34b7c3bed027f19ab31cb.jpg', 'vaca253_jpg.rf.2ac6eaa7d14bf247834e88fbf3bc5ee7.jpg', 'img00255_jpg.rf.26e325c808da690133daebb505b6ce01.jpg', 'vaca83_jpg.rf.5590b1c3ac73cc8ca9a6e5c8d49568ed.jpg', 'hf01-33_jpeg_jpg.rf.57ef5c46766a0c5d50b03985ca89712f.jpg', 'hf02-38_jpeg_jpg.rf.91034e5cc25cf99d393eb4b91a0e9111.jpg', 'hf02-192_jpeg_jpg.rf.d2cf852d60d0fd8a1d28fc7f8d9ece5c.jpg', 'Ayrshirecattle124_jpg.rf.2b2c4c925a949ffa1b2a8f8bb5cebc65.jpg', 'Konkan-Kapila-Konkan-gidda-Konkan-removebg-preview_png_jpg.rf.88882dcfae41ddc95b7e3f85e9991aa4.jpg', '10358153_jpeg_jpg.rf.d534633b8656aa3dea99d456daac61f4.jpg', 'vaca289_jpg.rf.7c5c87fd8497b905f64696553a034db7.jpg', 'hf04-36_jpeg_jpg.rf.305878b602470ba7327c6a0670935ba3.jpg', 'hf02-120_jpeg_jpg.rf.4f93c3675571a30036e5d5300ad9f48a.jpg', 'img00112_jpg.rf.0e45641f607ec4ca851fac8c3b18c302.jpg', '-OWS_mp4-520_jpg.rf.79c5fc5cdc29b5ca94951588c0992989.jpg', 'hf02-27_jpeg_jpg.rf.af3a23ef6959e8134814a621a845f574.jpg', 'Dry-Sahiwal-Cow-removebg-preview_png_jpg.rf.ba45b5369479a987126b80d15c0168b6.jpg', 'hf01-59_jpeg_jpg.rf.dbb98d50941c876159dc4a557efe7654.jpg', 'img00345_jpg.rf.4b22d503eb20269abb79112ebb032f98.jpg', 'vaca213_jpg.rf.a2aea971491ae9ee0c02f90df12be485.jpg', 'img00222_jpg.rf.f55dc3d3134fbcbb58dbe594cb4f1efe.jpg', 'hf02-16_jpeg_jpg.rf.29e6d63956bc5ba1722702eea1fc1a2f.jpg', 'img00032_jpg.rf.4012bcb027c02c2680467d4374538533.jpg', 'HolsteinFriesiancattle2_jpg.rf.340361b9bab266ff574f6f035c2860c8.jpg', '-OWS_mp4-460_jpg.rf.9c28370c55149036a6b82d6557ceeea3.jpg', 'istockphoto-472741965-640x640_jpeg_jpg.rf.208e670f2b5723c16e322ddac1140c1b.jpg', 'img00174_jpg.rf.c91be03cea5bcbccd50d56688892c956.jpg', 'img00428_jpg.rf.f953de9c8727947f4c18bb66648d47c0.jpg', 'hf03-3_jpeg_jpg.rf.638e9c5a8ed5bf996a6d1e0ad3ac4c6c.jpg', 'vaca296_jpg.rf.d59eaa7fd8f1ac3020ceaacc9c4d6c89.jpg', 'HolsteinFriesiancattle121_jpg.rf.c4bc332c6a3ad70740c4d0574a0821b2.jpg', 'HolsteinFriesiancattle71_jpg.rf.520f21b6463894f5415dadc22d30f219.jpg', '-OWS_mp4-525_jpg.rf.eff93493f72d398fb283fd0b53f3d5d3.jpg', 'HolsteinFriesiancattle18_c_jpg.rf.3eb8cd1a16034f84eb8d09b8b921e848.jpg', 'img00133_jpg.rf.91127d5440800b35f5504cdbddfd7858.jpg', 'vaca246_jpg.rf.eecd2d3ed9c79199742309d389def05f.jpg', 'img00257_jpg.rf.197839994b61ff1273435d2dd6a261c3.jpg', 'img00412_jpg.rf.d2ef685145d0e67069ae1cad285ddb3a.jpg', 'big-al_2-removebg-preview_png_jpg.rf.c5897733890ce1f2701daf23ec10c6f1.jpg', 'img00195_jpg.rf.d147730e28d3fbeeec65305e6fbb08fc.jpg', 'hf02-210_jpeg_jpg.rf.4256af49425cd826eb648ba39553b5e0.jpg', 'HolsteinFriesiancattle13_c_jpg.rf.785eac1a9454ad0beae6f929700f1ea5.jpg', 'vaca47_jpg.rf.e40cae8e62f013ed67b2039f3bd3feac.jpg', 'img00358_jpg.rf.48ef0082872b0ad228e56f5608c66243.jpg', 'vaca128_jpg.rf.b3f61f4b0a745835d9394ad14e9e94e2.jpg', 'vaca163_jpg.rf.43fb909224aaac0eb17a8ab3cb4a1f57.jpg', 'HolsteinFriesiancattle57_c_jpg.rf.9e8ad51583106bdb4ec82f7de63f2047.jpg', 'hf01-27_jpeg_jpg.rf.9ca7728890ac32de7749a3b50d1d5407.jpg', 'vaca85_jpg.rf.b718a41fabb7607296b46e6316f9bf40.jpg', 'img00149_jpg.rf.93754866c553306ad16e9ff0a1baeec9.jpg', 'HolsteinFriesiancattle106_jpg.rf.bb242258f1a837e71c2bbe40301131d2.jpg', 'vaca230_jpg.rf.eeda82dd39e8881bf10cf5e938af46f4.jpg', 'HolsteinFriesiancattle110_jpg.rf.47786b5bfe8b8d07a382a611868204e8.jpg', 'hf03-71_jpeg_jpg.rf.18aaa041ebdcce2986e858af2dc68537.jpg', 'HolsteinFriesiancattle87_jpg.rf.0b28b5311ced4e342027ddbda184481b.jpg', 'output_0284_png_jpg.rf.3b16d77daa6fb65b1343194f0e41860d.jpg', 'HolsteinFriesiancattle19_jpg.rf.34d78c477f31919b847321a6d7389b47.jpg', 'icelandic-bull-mounting-a-cow-in-a-meadow-southern-coast-of-iceland-C31GW9_jpeg_jpg.rf.59515649a0bde08f554b445ae7e97117.jpg', 'hf02-112_jpeg_jpg.rf.aa1357adb1fca311e79edfe691eeeb63.jpg', 'Ayrshirecattle90_c_jpg.rf.2a09cca5defbcbfc5a5975c2463c0c18.jpg', 'vaca93_jpg.rf.b2ca627c8a8ed80b3abc23b8dab9f03c.jpg', 'hf04-62_jpeg_jpg.rf.5e7953380a5751bc8e5d6214d2a36e76.jpg', 'hf02-157_jpeg_jpg.rf.267152fbebe6ab01002ea59d350f975e.jpg', 'hf02-12_jpeg_jpg.rf.5dc40d8faf7fa18a9eeae62a741b2896.jpg', 'vaca8_jpg.rf.847b7448c51ac98b64f57f8df809a3a9.jpg', 'hf04-13_jpeg_jpg.rf.7bc1de012b1e5777c6c71abcf9afe5db.jpg', 'hf03-17_jpeg_jpg.rf.bb188d896506a1cc2efc9031b110ffb1.jpg', 'HolsteinFriesiancattle86_c_jpg.rf.6620d364297f081729796d014a4b326e.jpg', 'output_0120_png_jpg.rf.198a6376b4f39092c134b9157b170f4a.jpg', 'hf03-112_jpeg_jpg.rf.85868253555bf169c610f9165a0629af.jpg', 'HolsteinFriesiancattle51_jpg.rf.b392cebf00d0dc81b156bf1aec08148d.jpg', 'vaca121_jpg.rf.c82067a461ca83fe5ed67e752e6fb454.jpg', 'Ayrshirecattle58_jpg.rf.19225f65b1fdc10484b1b9db0f80a894.jpg', 'HolsteinFriesiancattle74_c_jpg.rf.e5b1ac4466e43c646b74e2befd885753.jpg', 'hf02-131_jpeg_jpg.rf.916d1acf1afb56e93738907ab34d9364.jpg', 'HolsteinFriesiancattle58_c_jpg.rf.d5354e2aeb355aefb1a236ea034d9719.jpg', 'HolsteinFriesiancattle111_jpg.rf.0275c499fcc2db25b2bb6ec37d748a6a.jpg', 'hf01-52_jpeg_jpg.rf.2a3b72a31c1c0c2a4ebb454800b99fe2.jpg', 'Ayrshirecattle45_jpg.rf.967a4a1c50b65b1a44423adeb0066755.jpg', 'hf04-8_jpeg_jpg.rf.9cdf1a66d93d034a28ab80b0747223de.jpg', 'hf02-122_jpeg_jpg.rf.ea23a91e0c72c69deaa718115af8af65.jpg', 'vaca134_jpg.rf.fe75a69a596325f071aa4886d871c0ee.jpg', 'HolsteinFriesiancattle132_c_jpg.rf.ab889a33efd3a9651bc2e08bb4e5c01d.jpg', 'hf01-7_jpeg_jpg.rf.5b86f28025513de63a39b1ea6210ea85.jpg', 'Ayrshirecattle125_c_jpg.rf.85f7cc6eade3dcb48b4b43fc2cbdc3f4.jpg', 'hf03-63_jpeg_jpg.rf.27d47d972b87aa28503d92f1f11f41a9.jpg', 'WalzCowCalfTMW_4448_jpeg_jpg.rf.802ecd1373ed8f428877b7f046d4bd08.jpg', 'hf02-158_jpeg_jpg.rf.f47cdb90b2eae42d42ceba7cf23d9867.jpg', 'HolsteinFriesiancattle135_c_jpg.rf.ce56e9102974717216c622ff20681d53.jpg', 'vaca190_jpg.rf.20f1b1d3f97df6d60f063eb2d56cc23f.jpg', 'hf02-227_jpeg_jpg.rf.a13af3e4ed66ade3b180e1f005af3823.jpg', 'Ayrshirecattle130_c_jpg.rf.6c7a4c88c2ba224a59b20fa22b4a30f9.jpg', 'vaca196_jpg.rf.2d24c1b3ab2252306746394858236633.jpg', '-OWS_mp4-351_jpg.rf.6acabb8dca4b520fa04a048589a05a5f.jpg', 'img00157_jpg.rf.54c277005987dc893ae0f5fdee00f317.jpg', 'limousin-bull-mating-with-suckler-cow-which-on-heat-cumbria-BBKT92_jpeg_jpg.rf.7266b6dc3b5df24234f7c9ab70319816.jpg', 'vaca89_jpg.rf.0ad1a32361f97f27e9c36e31e14ed773.jpg', 'hf03-47_jpeg_jpg.rf.ba2e106bb35645028e151aea4406047c.jpg', 'hf02-216_jpeg_jpg.rf.08bed54068974cb1579b56947163e8e1.jpg', 'hf04-12_jpeg_jpg.rf.563afee4936b005ff7b116533b1e0e6e.jpg', 'Ayrshirecattle69_jpg.rf.dd6c9ec624279a48104208c4e7d901ea.jpg', 'hf02-92_jpeg_jpg.rf.02016c4cadcf4164aaeb645101449663.jpg', 'hf02-191_jpeg_jpg.rf.425b91df7d4da6b5488816e172c4146b.jpg', 'img00207_jpg.rf.9c25b70ebeb12085e48d6b2d4eea7003.jpg', 'hf02-222_jpeg_jpg.rf.bf8f03898b11089400e2f192a3de140d.jpg', 'img00410_jpg.rf.144af1b339eeea176b4022fa94b149d2.jpg', 'hf02-156_jpeg_jpg.rf.958cb7c921a66dd28d7d59eafb9e6f9f.jpg', 'img00037_jpg.rf.d031a5363d9bce1d7d7e238b2d16df57.jpg', 'Ayrshirecattle117_c_jpg.rf.84834c8789815291662f451e368ebe1c.jpg', 'HolsteinFriesiancattle108_jpg.rf.a71b5b21ced7920c8f4e8b2caa454bb8.jpg', 'vaca29_jpg.rf.c717f7aee286c215e9e9a037a2710963.jpg', 'hf02-95_jpeg_jpg.rf.6a1ec655ba6dc42fd867890b2dc703f6.jpg', 'HolsteinFriesiancattle64_c_jpg.rf.d3387db7eece07542a16a1f53383ff19.jpg', 'vaca3_jpg.rf.fea9299c4bcc5e6f9f307440303979dc.jpg', 'img00253_jpg.rf.2b0ad282e8488ba53090164d9fa67dab.jpg', 'HolsteinFriesiancattle25_jpg.rf.cfe91bf45f5f66bed80a6af9d5a5a3b7.jpg', '-OWS_mp4-735_jpg.rf.0d2610f97f3c090df443258d01f00a1f.jpg', 'maxresdefault-6-_jpg.rf.bc55d33da4ec75794bddc6fa2c3eafce.jpg', 'HolsteinFriesiancattle27_c_jpg.rf.85eba5f3ab8672dd77381a56e1259ba2.jpg', 'hf01-39_jpeg_jpg.rf.a0f8f88fefdf4487948b471e93933f27.jpg', 'Ayrshirecattle15_jpg.rf.2680230857135f2582761d84432fb4e0.jpg', 'vaca5_jpg.rf.e8ad18d2ed76387924d97361521d7816.jpg', 'hf02-47_jpeg_jpg.rf.722eefec24d14ab3c831ef65fb773166.jpg', 'Ayrshirecattle32_jpg.rf.31a4af054712853614c3579b20d76a3e.jpg', 'hf02-127_jpeg_jpg.rf.eff0f8f1edd3a275ec148416a74374cf.jpg', 'hf02-85_jpeg_jpg.rf.8fc144a90810be7b1bc38683a373ddb1.jpg', 'Ayrshirecattle122_jpg.rf.b62fc20a800238290a9bd0315a72df18.jpg', 'hf02-160_jpeg_jpg.rf.37b5b57643117707a05e2eb74da31c61.jpg', 'hf02-190_jpeg_jpg.rf.c05051673ccda91501cf5ba7483e9d43.jpg', 'Ayrshirecattle119_c_jpg.rf.f085652045ba6ee1ed7787b872a56a0e.jpg', 'vaca23_jpg.rf.c990e2519e6ecad5346c76539a7637db.jpg', 'vaca247_jpg.rf.1df7aaeffdcab47830fd7975d41aab8d.jpg', 'hf03-29_jpeg_jpg.rf.aa64df3064e25af146008be0c3e8dd46.jpg', 'hf02-203_jpeg_jpg.rf.ccb71c15034a37903c1da75c0cd8c212.jpg', 'HolsteinFriesiancattle42_c_jpg.rf.8ade1eb46bd82c5c71013e828bb220af.jpg', 'vaca46_jpg.rf.54a9f248e4062e201fafe20dbeb89e4a.jpg', 'hf04-65_jpeg_jpg.rf.c7bf4ceffa27e759b0ebfa3babbe0c7c.jpg', 'hf01-41_jpeg_jpg.rf.21c7fa0cdecf16f0f4b79e6accc02d0b.jpg', 'floirida-cracker-cow-cattle-egrets-rd-erickson_jpg.rf.df029c257bf11acf3c98a124d3d9d7b7.jpg', 'img00238_jpg.rf.a0c31de654745d5418453b9cae7cbd02.jpg', 'img00230_jpg.rf.494aeac0332271fc1b7ae7714b744931.jpg', 'hf01-1_jpeg_jpg.rf.675b1f72c046d059f1590eab991dd73e.jpg', 'vaca37_jpg.rf.7c75be7e8e0d3a87aa062690f729d4bd.jpg', 'Ayrshirecattle84_c_jpg.rf.0a3b154f8d19f932c040154c4895ce6f.jpg', 'HolsteinFriesiancattle23_jpg.rf.5335ad744d7981371f744acef4c16901.jpg', 'img00217_jpg.rf.cf4d404fed640f9fffbcfbaed04ee40f.jpg', 'img00228_jpg.rf.4cbd8404060216586bdacf20a71d0ba6.jpg', 'hf04-15_jpeg_jpg.rf.84575dc2c955ab8a8d102df140e52b00.jpg', 'Ayrshirecattle24_c_jpg.rf.f1695cb78a702ccad724d9c7c3ccf1e4.jpg', '-OWS_mp4-54_jpg.rf.fad91639098a942f1699ab025df92b16.jpg', 'hf01-51_jpeg_jpg.rf.75c12e0dac66efc2c709f3719f1523df.jpg', 'hf03-18_jpeg_jpg.rf.2c71e884d6ea65dbfc6c7727861932f6.jpg', 'HolsteinFriesiancattle20_c_jpg.rf.abd7bb2d98a150148133ef5670242329.jpg', 'hf02-51_jpeg_jpg.rf.3792f22156244bd082664ad408909f42.jpg', 'hf03-89_jpeg_jpg.rf.c1ee638607ab21d15efbfc6866d1ee66.jpg', 'vaca243_jpg.rf.23b2dea73df9d81add7c0f082eab60c4.jpg', 'HolsteinFriesiancattle72_c_jpg.rf.b381df796886a0bab2ee48ebe631b577.jpg', 'hf01-12_jpeg_jpg.rf.f90f2d9a4b3e9d21e018365db56d404d.jpg', 'hf03-6_jpeg_jpg.rf.85dbd901b580eddd2caf26076b35cf8a.jpg', 'Ayrshirecattle31_jpg.rf.63ee07ef60bac0d7639ceb7e91f03969.jpg', 'HolsteinFriesiancattle31_jpg.rf.a4688669fab687901754e75c123d436f.jpg', 'vaca269_jpg.rf.cb688b8113faffa5f50d4af6ce06f114.jpg', 'vaca250_jpg.rf.2590b2e35ed673ed772fcf74eea2df08.jpg', 'HolsteinFriesiancattle99_c_jpg.rf.b538881d9a5d277273081784266f60c2.jpg', 'vaca88_jpg.rf.52d37c6986096c5e24c0fa23a2e4578e.jpg', 'hf01-21_jpeg_jpg.rf.519b7f4610ce3fd2c6ea9bb8fb68f75e.jpg', 'hf03-80_jpeg_jpg.rf.d02cb50ab4f15d7f831ce057465d3dbd.jpg', 'hf03-98_jpeg_jpg.rf.13dc6ec775a4d8dbd618177a70575c0d.jpg', 'HolsteinFriesiancattle129_jpg.rf.95f789eacc627d5aea7691cd90793cd6.jpg', 'vaca74_jpg.rf.67d9dd5a5817969006efa3f9b639a564.jpg', 'img00105_jpg.rf.3df8c07ac0954ae8be8052d2b0acf3be.jpg', 'HolsteinFriesiancattle120_jpg.rf.499e3e7bb4b42d6e7adb25463c180900.jpg', 'hf03-41_jpeg_jpg.rf.add4e52e7e920c836ed551993c7098fd.jpg', 'Ayrshirecattle33_jpg.rf.857d3f0d557d6d374e72639976b10c05.jpg', 'hf01-17_jpeg_jpg.rf.86a5e905788a2843bb6e7dfc2e4b71b3.jpg', '-OWS_mp4-268_jpg.rf.64091b042a505302929fa0b406e837d3.jpg', 'Ayrshirecattle100_jpg.rf.56a5c31a228fb0a75513c1c4c73aca8b.jpg', 'unnamed-7-_jpg.rf.d107c407429c61f2707bf91d3458e9ad.jpg', 'Ayrshirecattle125_jpg.rf.6c75fcecb192eb79e75e3be48eb6c338.jpg', 'Ayrshirecattle29_jpg.rf.8cc3a3af9993abe47b6ff281d48a4723.jpg', 'HolsteinFriesiancattle69_jpg.rf.ad2be03a007cec76b5902c127e71743d.jpg', 'Ayrshirecattle39_jpg.rf.b7ed76f016ed684b2bebc83c01b87dba.jpg', 'hf02-28_jpeg_jpg.rf.1fe6df6855234a08e1eec3642c5e6ef2.jpg', 'HolsteinFriesiancattle17_jpg.rf.ba9b9d8b01897fada71ab28b45fc4cd2.jpg', 'img00128_jpg.rf.1dc489d6cd70c12641470b8b0d104b34.jpg', 'hf02-149_jpeg_jpg.rf.0758f8adaa2768059526ea8ef96342fc.jpg', 'images-3-_jpeg_jpg.rf.02662e6bb9062075ca1ba201faddfb4a.jpg', '-OWS_mp4-105_jpg.rf.12f35a8f4cb7c44f77778c850c8ad960.jpg', 'img00251_jpg.rf.dcb1af9a143ee1241f091f200fc7b4de.jpg', 'HolsteinFriesiancattle75_jpg.rf.e366afd47b0135e5321adac333ad5211.jpg', '0174799_red-cow-for-qurbani-sraf002_jpeg_jpg.rf.b2121bac092c7eba2cd0615a7dfa2c0c.jpg', 'img00252_jpg.rf.a4a23dd45600c6b9c651169d2988f287.jpg', 'hf04-78_jpeg_jpg.rf.6c343220d00440ffcb0a7e3ab0767094.jpg', 'HolsteinFriesiancattle23_c_jpg.rf.482a9e7ef49752bd8f10e8e2c9624e1c.jpg', 'HolsteinFriesiancattle11_jpg.rf.7fe9a47913eb20b239c51377a7876d5d.jpg', 'vaca170_jpg.rf.84879eb0a5ce2a7b81aa2013beea64f2.jpg', 'vaca49_jpg.rf.d19816a670e21dd0ce4b73c2031e65ac.jpg', 'Ayrshirecattle31_c_jpg.rf.c20f12d0510c6dd0820ba9320accb9f3.jpg', 'Ayrshirecattle133_c_jpg.rf.7b5267382ae5109b34aaed64ce9b732f.jpg', 'hf04-79_jpeg_jpg.rf.986087e752469fd6f42afc469dcc1afd.jpg', 'hf04-29_jpeg_jpg.rf.96843233339f8fb1ab8c6c9db827cd8b.jpg', 'hf02-104_jpeg_jpg.rf.d7aeedbba4331031e9af48b45d17a7a2.jpg', '-OWS_mp4-13_jpg.rf.6526f1c63f4c1eede8ad8e5ea555777f.jpg', 'img00193_jpg.rf.7ebbb3295a36fc24575f458f34d704cf.jpg', 'hf03-76_jpeg_jpg.rf.436ce4a68f882b73d008a4f895ac6a52.jpg', 'hf01-46_jpeg_jpg.rf.33f73b601daa970df805bc750e4aa3e5.jpg', 'hf04-38_jpeg_jpg.rf.8b3416a81f2d462d47fcc4bf18d38134.jpg', 'output_0011_png_jpg.rf.d2e922ca9a64f8c878130813f4e0fa01.jpg', 'hf03-27_jpeg_jpg.rf.98992a09539150652576cb5d3e54dcf6.jpg', 'hf02-179_jpeg_jpg.rf.43e742ad25c174dc174be7ef8cd005b5.jpg', 'vaca55_jpg.rf.12902478d07cf94a039db3d255798291.jpg', 'vaca177_jpg.rf.f4c3c6d69778ee826bc9fccde581ba0e.jpg', 'HolsteinFriesiancattle33_c_jpg.rf.35c6bbdb339e00dfc623544be721eae2.jpg', 'hf02-133_jpeg_jpg.rf.b0d265045ccb1378d7b303d5496084c6.jpg', 'hf02-211_jpeg_jpg.rf.f4db072fff4704cc632c98e6fee5c7bc.jpg', 'hf02-138_jpeg_jpg.rf.8549fa9f9e7ac15014ec683b25f82d65.jpg', 'hf03-97_jpeg_jpg.rf.d5e3b6d993822cf3467c46965ba984de.jpg', 'Ayrshirecattle68_c_jpg.rf.dc4d7037092bf29e8b3b25799fbab2c1.jpg', 'hf03-78_jpeg_jpg.rf.611ec6202d3b27a464cc5e8b784a1a08.jpg', 'img00100_jpg.rf.fef21b6e60ec032b84f462c66efb79d0.jpg', 'Droughtmaster_bull_-11232185146-_jpg.rf.f4f7de6b4463519eea645fb852bf60b3.jpg', 'Ayrshirecattle76_jpg.rf.817a6cbebbca7205a1f034c29feebeb3.jpg', 'Ayrshirecattle113_jpg.rf.29fc4dd6a45a92e5c67cda7f883f12a8.jpg', 'hf04-97_jpeg_jpg.rf.b8032354d21056a71ee957ea6e689678.jpg', 'd94a46d2-2016-04-07-cows-the-sacred-and-the-profane-image_jpg.rf.2fc9ebedd4f392d949cec943b62ac1c1.jpg', 'hf02-153_jpeg_jpg.rf.db2c0d55de323d12246e68339b4930b0.jpg', 'hf01-9_jpeg_jpg.rf.6a0deacf1cf0bd5dc060d6283a23743a.jpg', 'hf03-8_jpeg_jpg.rf.3d186667b253dfdaac1c16331a401bcc.jpg', 'Ayrshirecattle29_c_jpg.rf.59e774593d54580d4f7fbf9f38cfddfb.jpg', 'img00256_jpg.rf.344c9b702ac40d2c3f466696035ae84a.jpg', '-OWS_mp4-47_jpg.rf.059a8a55dc24ca9ab5206cc5b0383842.jpg', 'hf03-86_jpeg_jpg.rf.626344a12eb5bc2721cd6115d68e4b5b.jpg', 'HolsteinFriesiancattle68_c_jpg.rf.4a6534e9580bfc71171eae0d03fa370f.jpg', 'vaca82_jpg.rf.60a9a57b1ddcd344c75f1cbb4145fc3c.jpg', 'output_0290_png_jpg.rf.f3deab15a7ae07e8228f8ec6a819448a.jpg', 'hf04-39_jpeg_jpg.rf.d35c769bb1d578db24dbc626664cdcb7.jpg', 'vaca217_jpg.rf.abae592e2734cb2f45c8d67f2e02eb9f.jpg', 'HolsteinFriesiancattle55_c_jpg.rf.117d24b8c1f160848e471f8d597113ff.jpg', 'istockphoto-926167162-170667a-removebg-preview_png_jpg.rf.6193defee3e3db429876db6f2ecb3f88.jpg', 'output_0067_png_jpg.rf.733cf9bdb0be9056961d179832feff81.jpg', 'hf02-8_jpeg_jpg.rf.c7d2e1fe359445e4eed2c1d809ad894f.jpg', 'HolsteinFriesiancattle110_c_jpg.rf.75343da28e861dbf889723d9ac903f36.jpg', 'hf02-117_jpeg_jpg.rf.07ac39105e20e90daad2a9b1b1d04182.jpg', 'img00195_jpg.rf.c4d2d842e8c9dc80e052310226a9278f.jpg', 'hf02-91_jpeg_jpg.rf.a0c0f837270ff756ac7a94ca39586203.jpg', 'HolsteinFriesiancattle114_jpg.rf.863e5cff008b2110a9f98a26348c00fd.jpg', 'HolsteinFriesiancattle10_jpg.rf.da89dfde54e6e9318b7f92d7504edb44.jpg', 'vaca25_jpg.rf.891314ca77427fd9f96fa2dd0bcf0721.jpg', 'img00310_jpg.rf.70d30fea1b1b1bedc98be29f049a8d98.jpg', 'vaca273_jpg.rf.999ef40b55503a406292a0134a56835e.jpg', 'hf02-79_jpeg_jpg.rf.aaae24bc423c9b958d319d3acdb6c7b7.jpg', 'HolsteinFriesiancattle28_jpg.rf.dd824fd31b463944cc31b71de3d9ef45.jpg', 'hf02-34_jpeg_jpg.rf.d394d27cc1d843d60f19f1f20c8f7a21.jpg', 'img00199_jpg.rf.fa8278565eb76fe3967a21534c5b1b33.jpg', 'vaca277_jpg.rf.6c1ba0df399436e01fe135763f7efa26.jpg', 'hf04-60_jpeg_jpg.rf.c01255db968d09dcb8bb02a15c92a080.jpg', 'img00125_jpg.rf.616945591e0ad18e266790ced02b2ee0.jpg', '-OWS_mp4-67_jpg.rf.e916c463a2fc65a4c4c4eef71b5ad3cf.jpg', 'dai-10-mitsumaru_orig_jpg.rf.fb16660904e8c714ad6d3627ada94f99.jpg', 'vaca95_jpg.rf.06811f4e3655d8cefe865ae0430319ec.jpg', 'hf03-36_jpeg_jpg.rf.c9e312b43c06af5a89c31221af850e9a.jpg', 'Ayrshirecattle57_c_jpg.rf.64348377b44c3f1edd9f07ad3889747f.jpg', 'hf02-232_jpeg_jpg.rf.707aea8e398667efb6306991213eae70.jpg', 'hf01-37_jpeg_jpg.rf.a0317fa7199340d3511338d1a964efad.jpg', '-OWS_mp4-521_jpg.rf.d50d731930fabfde23f15b1c305971cd.jpg', 'hf02-183_jpeg_jpg.rf.efb468f6d7412dce15a8213cab2ffb59.jpg', 'vaca104_jpg.rf.8ee7dffedf19d5dfbce7f7bec7d78e6c.jpg', 'HolsteinFriesiancattle32_c_jpg.rf.fe024ebb9f1704b4af9ea8f6bc94aba4.jpg', 'vaca145_jpg.rf.5c08fa1cdb5af223c273d7e05f1b379e.jpg', 'Ayrshirecattle47_c_jpg.rf.f7620516fbc0cc50aedcaa6ce9924faa.jpg', 'hf02-54_jpeg_jpg.rf.3bd67644b9946d5f8a77bb32b55160f0.jpg', 'vaca22_jpg.rf.c716c135cf8482ea13600bb241d81365.jpg', 'Ayrshirecattle113_c_jpg.rf.690fe9b031ce039914a6f9556b9fa9b4.jpg', 'hf03-82_jpeg_jpg.rf.bec44e94419fb628e2200e217d44e10b.jpg', 'Ayrshirecattle136_c_jpg.rf.86536419c39d3b00c3f4103a786f130f.jpg', 'vaca122_jpg.rf.98d59e90e90d0b6068ba70468bed3c21.jpg', 'Ayrshirecattle102_c_jpg.rf.39a2470a399a83440e3c745129864dd3.jpg', 'output_0131_png_jpg.rf.06cc12348840cc38d770fb746248454f.jpg', 'Ayrshirecattle28_c_jpg.rf.880f923347d80fb27780eba0f10b5adb.jpg', 'Ayrshirecattle4_c_jpg.rf.e7069e1f336788d0779aa829ce96d83c.jpg', 'vaca249_jpg.rf.2b51659b09f4fe13cf6307fad5505ac2.jpg', 'img00291_jpg.rf.87c973d94b842122415dcbe2590c7eb8.jpg', 'Ayrshirecattle41_c_jpg.rf.060267cd4a643675763e36020fba127b.jpg', 'hf01-29_jpeg_jpg.rf.0d73f1cdca5b42918be8dfc131f36106.jpg', 'Ayrshirecattle36_jpg.rf.4a2a77ce6114b431bde3e258b5bdd2d6.jpg', 'img00018_jpg.rf.d4eae64574fd48fddb4712cbabc0d48c.jpg', '15878459-young-ox-isolated-on-white-background-1-_jpg.rf.94c825c8abeb61dda4277b6cbd81f9b7.jpg', 'hf02-109_jpeg_jpg.rf.1492b714b9573d5435da0b83f42f830f.jpg', 'vaca30_jpg.rf.4874b589442d3095bdf78597dcf43d91.jpg', 'img00234_jpg.rf.fc90ab540b81641f8b2881031d15b5db.jpg', 'hf03-38_jpeg_jpg.rf.97bf8b594aa289489f6851f2edbbc7da.jpg', 'hf02-170_jpeg_jpg.rf.7bd691af92ab7adb9c458a818405c16a.jpg', 'HolsteinFriesiancattle111_c_jpg.rf.28ddae1a8430735de4755b851f632304.jpg', 'output_0252_png_jpg.rf.4e85081cf0b03d49278886ae30324152.jpg', 'bda1f17a48c2ec844020a13f17fb3b54_jpg.rf.bedd5189bbd1b1af535f49cc8745f5c2.jpg', 'hf02-2_jpeg_jpg.rf.5e1ae9e5abe8e8b10e210402b188a3c2.jpg', 'Ayrshirecattle86_jpg.rf.c4947c8c813ce0abf21a449bed0ed0d0.jpg', 'Ayrshirecattle88_jpg.rf.66f213e56e6395ce16365db247666693.jpg', 'Ayrshirecattle50_c_jpg.rf.ea25586cc4deb4e8e77dfce3846e5264.jpg', 'Ayrshirecattle35_c_jpg.rf.7468cd011320c59fb6afe1220e6148ff.jpg', 'hf02-208_jpeg_jpg.rf.a10fa384c454e1736d0e5bd761e96e6e.jpg', 'vaca204_jpg.rf.1cd8de1bf7b6227405b7f0f53b3e00ea.jpg', 'HolsteinFriesiancattle128_jpg.rf.4dc3e4c3270f89c2868a26d42027d673.jpg', 'img00242_jpg.rf.9c03e2f8e6bf50894d9890f962fbfa87.jpg', 'img00096_jpg.rf.526694cf2243716fc6658a0b92b41b06.jpg', 'Ayrshirecattle89_c_jpg.rf.8324b21c782a52186119e72f7beeb355.jpg', 'img00095_jpg.rf.b477473123f3f1940bc2d84e957bdc99.jpg', 'img00353_jpg.rf.8199fde5341a84090bb67088a9febbbe.jpg', 'HolsteinFriesiancattle50_jpg.rf.db1a4f21eff82bb68e72cffb834595d6.jpg', 'vaca20_jpg.rf.3b01940a94450ebf16c1f6462467f18c.jpg', 'vaca138_jpg.rf.47d9babd534202e29189a4c581219d5b.jpg', 'ibk-75833_jpeg_jpg.rf.94eded23b4c226e67547ea786766e18e.jpg', 'vaca76_jpg.rf.82e1dffdc251a6a060041438a573a43e.jpg', 'hf02-30_jpeg_jpg.rf.9d7cf78c18fac0da62288336bee89b6b.jpg', 'Ayrshirecattle20_jpg.rf.739420de833775b5c03cb5e4dc68932b.jpg', 'hf04-35_jpeg_jpg.rf.08256c3a98bdc3a7f1c5367df5fc013f.jpg', 'Ayrshirecattle77_c_jpg.rf.51aa016339bddc0ed605b2ed9eadf480.jpg', 'Ayrshirecattle50_jpg.rf.21ccb7c3156002bbe077587285ee6732.jpg', 'HolsteinFriesiancattle96_c_jpg.rf.642714971d2fcaf3f00af217ef1ff3cd.jpg', 'hf03-26_jpeg_jpg.rf.13164f2493c7eaca83e531a2b2f70552.jpg', 'HolsteinFriesiancattle82_jpg.rf.e1fd34ba0ba92728848a880dc13c5c51.jpg', 'Ayrshirecattle146_c_jpg.rf.2b6e88409ff2c87e37c233f50914c2e8.jpg', 'vaca156_jpg.rf.b096a78fd44433e86f3649de05eb7c3e.jpg', 'vaca81_jpg.rf.e094f8e7a73cd6a86ed72e85610c2c87.jpg', 'Ayrshirecattle100_c_jpg.rf.2372e061bd0259365576c9568dca8946.jpg', 'img00254_jpg.rf.c6b503fcdd8b7b015143841f30100e5f.jpg', 'hf02-213_jpeg_jpg.rf.c64c66e5f4854be0f2f619e1df6f98ff.jpg', 'img00266_jpg.rf.bb527929ff989fe314279297344ad368.jpg', 'Ayrshirecattle49_jpg.rf.482644cc6ee15d63c027df83909a842b.jpg', 'HolsteinFriesiancattle36_c_jpg.rf.21f228f243f16aab70a9fb2bd700778c.jpg', 'vaca107_jpg.rf.f2483921c3715293fe8a7789b6f31507.jpg', '-OWS_mp4-545_jpg.rf.45aece42a48371681cad41e76da1c730.jpg', 'HolsteinFriesiancattle14_c_jpg.rf.99a12d6aacedca934709a2e8f2d512bb.jpg', 'hf03-96_jpeg_jpg.rf.9a6dde2dfb2de40ddeadafdd0a31bbcd.jpg', 'hf01-60_jpeg_jpg.rf.a201c494a7a560f57ce0d42fc6e97b24.jpg', 'vaca275_jpg.rf.38c4cad9340a2279dc0aa03c80ce9239.jpg', 'hf02-159_jpeg_jpg.rf.da26fd465ffbcebc1ee33c561394c2df.jpg', 'Ayrshirecattle127_jpg.rf.d4c3353abe68ef46801ba8ff28603534.jpg', 'HolsteinFriesiancattle18_jpg.rf.759c9a737e08f3997dca921dd77556e8.jpg', 'hf02-124_jpeg_jpg.rf.d21633d2c2278c3866f123d195cf6ee9.jpg', 'cow-mounting_jpeg_jpg.rf.33e34a74473d17dd926d9df00ff331a1.jpg', 'vaca251_jpg.rf.04570dd9f4b9cfa5385b46f1b5921304.jpg', 'hf02-101_jpeg_jpg.rf.e8eda2555e84fc8ce4c8ad8750015e13.jpg', 'hf02-50_jpeg_jpg.rf.ee666d8d327d00edf91c5d4af2ef89c8.jpg', 'Ayrshirecattle146_jpg.rf.b009af2263867794a5a12226e573c193.jpg', 'hf03-102_jpeg_jpg.rf.e7e63a05ac3398234c645e23c1d681fe.jpg', 'highland-cattle-in-field-england-uk-mating-with-cow-BBYHC7_jpeg_jpg.rf.971bdff9fc4074c12ecf0d79939c1cc0.jpg', 'HolsteinFriesiancattle53_c_jpg.rf.cfbe15be092eb3c1e83ef1cf131006a4.jpg', 'img00137_jpg.rf.8f4229a256e77bb8f2091783cee18246.jpg', 'HolsteinFriesiancattle24_jpg.rf.de0829f6b79f7147b5d1e41042046d14.jpg', 'hf04-90_jpeg_jpg.rf.cc5e35f5ec2474503a9999e445b22d6e.jpg', 'Ayrshirecattle126_c_jpg.rf.c7c5f6e6271af481313d9c73534fdab2.jpg', 'img00061_jpg.rf.1c0cd6ee8576ce1d1b5a56cbf1bfb405.jpg', 'Ayrshirecattle136_jpg.rf.f6df47f31667b98c579cd151ff691c9a.jpg', 'mating-pairing-cows-cattle-preview_jpeg_jpg.rf.5c51647443e5d30f5139c861915e4c61.jpg', 'output_0303_png_jpg.rf.2ff9f87d71ca62782df3517ed1e19673.jpg', 'img00076_jpg.rf.56a66f99ec3e6a04b893cf938f67688d.jpg', 'hf03-60_jpeg_jpg.rf.d343f4ed05186ab6479689b720d8793e.jpg', 'hf04-74_jpeg_jpg.rf.4374fbc60238063e9983cf751e1244a2.jpg', 'Ayrshirecattle34_jpg.rf.a7d29a66314ac5f9910cce1ada66e67f.jpg', 'gettyimages-480922428-170667a_jpg.rf.286bc4edaef9ef1c746748f17c251dcb.jpg', 'vaca168_jpg.rf.a1bd2039923fdf63534eb2fb817f6adf.jpg', 'hf04-64_jpeg_jpg.rf.d074e07454dca1ef0def06044e3ad43a.jpg', 'Ayrshirecattle2_jpg.rf.0af37f1f27613738db0c8572bd3769f6.jpg', 'img00098_jpg.rf.bf9c86d3664e427ce2b2dee51f83e720.jpg', 'vaca162_jpg.rf.99f5cb80a1bbe487d6e118aaabf26cdf.jpg', 'hf02-165_jpeg_jpg.rf.c0edee829418448c7ef2a7c31b60a314.jpg', 'Ayrshirecattle72_jpg.rf.5231c87ce227c61621e2b4ae79124dd6.jpg', 'vaca152_jpg.rf.ede6705ab2f588f9c96ab8c082d391cc.jpg', 'Ayrshirecattle123_jpg.rf.62d65b48b950929da6db9b7beaf755bd.jpg', 'Ayrshirecattle49_c_jpg.rf.1bded8b7d44dc34c0c8891a3e9d109a9.jpg', 'HolsteinFriesiancattle13_jpg.rf.05d2f688fb4da11e22e89e6a9cd8859a.jpg', 'img00357_jpg.rf.9f32d70d957cd61cd0190e55cd3a825d.jpg', 'detection-vache-chaleurs_jpeg_jpg.rf.c4d7ca0baea0d8346b7e1fb18dc3a5f5.jpg', '-OWS_mp4-183_jpg.rf.70e898f73025616a21cdbd87940e92ea.jpg', 'hf02-5_jpeg_jpg.rf.388783ea534cda9528ef70d39d489644.jpg', 'HolsteinFriesiancattle6_c_jpg.rf.93932c4d26483a4d320b36cc3422df62.jpg', '-OWS_mp4-524_jpg.rf.05f38b475928752a2786c541661dd68f.jpg', 'hf01-4_jpeg_jpg.rf.4ff7f1aabddb70238ac0d8ee76f95e9d.jpg', 'hf04-49_jpeg_jpg.rf.d84534c16e11d08b09545244310dc1f2.jpg', 'HolsteinFriesiancattle60_c_jpg.rf.698f4ef6acc4f6ffcd37cf9f5782df6c.jpg', 'Ayrshirecattle56_c_jpg.rf.db9c2462dd34cb628bab69f364d0f797.jpg', 'vaca98_jpg.rf.a41d9ce2b73bed0b31add40a1e078d06.jpg', 'HolsteinFriesiancattle117_c_jpg.rf.4b1ea151dd0e220ccc95d87b146dd4e3.jpg', 'hf04-45_jpeg_jpg.rf.8a4ef9bcca265c259e6e9f12098a3d1f.jpg', 'img00199_jpg.rf.8436559b4595bc747444229f949104dd.jpg', 'Ayrshirecattle18_c_jpg.rf.7365a02186ef4a77d26ed876ef3cefdb.jpg', 'output_0288_png_jpg.rf.5c15b781ccaaf081c081b7e3cdf48e3f.jpg', 'cattle-bull-calfs-grazing-field-bull-mounting-cow-other-cattle-calfs-grazie-corner-field-177559463_jpeg_jpg.rf.acb6ca0e7bd88b9a983747d32254a1d7.jpg', 'img00405_jpg.rf.0cce2e7a1bbbdb47475dda50fa06a734.jpg', 'hf04-109_jpeg_jpg.rf.8937b399735d954a550c16a6fc3dc079.jpg', 'img00399_jpg.rf.f493b2bfc46b8ca685723f484d3ddaf8.jpg', 'hf03-51_jpeg_jpg.rf.5d721ac6b67c27d038bfcec0faaba375.jpg', 'img00230_jpg.rf.09dbdfdbe3826f19ef883f9633bb24f8.jpg', 'vaca136_jpg.rf.8bf69d6a38fad9d706ca801dcaa9b147.jpg', 'hf04-34_jpeg_jpg.rf.d54eab46b5a94776864394ae4a499808.jpg', 'Ayrshirecattle134_c_jpg.rf.99ccf1933a5067a5677494f621929d00.jpg', 'HolsteinFriesiancattle32_jpg.rf.2180d7366b1cd7e519d0e209324149d9.jpg', 'Ayrshirecattle92_jpg.rf.55518e846e85b38c3cec24540ed19049.jpg', 'hf03-115_jpeg_jpg.rf.2287a69a7f329fde7d839c5011f951af.jpg', 'hf02-141_jpeg_jpg.rf.e54bacf7221a8e9c29dc813a37840de1.jpg', 'vaca182_jpg.rf.4d3b39b2161f63a54f47f01e603d8ae9.jpg', 'IMG_3801_jpeg_jpg.rf.7b5383c9383bad29ff9ff062f01a7784.jpg', 'hf04-108_jpeg_jpg.rf.bc80f997ac17ad6542c23dfc318f5627.jpg', 'HolsteinFriesiancattle69_c_jpg.rf.6631bc4bf91fb89f2c385de4d05b00f4.jpg', 'hf02-186_jpeg_jpg.rf.77ffc542066f1c4ba7a1351f6881167c.jpg', 'output_0057_png_jpg.rf.2b4b2f8c30d6a64a078afe8314fa939e.jpg', 'output_0070_png_jpg.rf.50b16c7ab530fadf1509d0ee25d8950c.jpg', 'Ayrshirecattle128_c_jpg.rf.d6b7e6c67b0ed3bc95e8e21942ff16cc.jpg', 'hf03-55_jpeg_jpg.rf.4880383d6a1edddf6117015815d92882.jpg', 'hf04-107_jpeg_jpg.rf.952f89b16b2308500f6dcbe7f752b61e.jpg', 'hf02-9_jpeg_jpg.rf.5cd97c872d96421072274006847a4f50.jpg', 'HolsteinFriesiancattle38_jpg.rf.f6bfafa4dd226e834b7d0dfaa8e792fe.jpg', 'img00170_jpg.rf.44b99d2b8b06ba07962c0d98d69da2af.jpg', '5342627882_02b6ffaf4e_b_jpg.rf.c01f4c823f060837f6332a00b1611dd4.jpg', 'HolsteinFriesiancattle52_jpg.rf.c5a625b1af535156ed2141391f91c269.jpg', 'hf01-64_jpeg_jpg.rf.39c3183d6753fce59aa0e8395717c540.jpg', 'vaca146_jpg.rf.fd84b7baf3d1d17e60b823e1ebdaa65c.jpg', 'hf02-43_jpeg_jpg.rf.94fc0949264b2c7bda00a62b95731a44.jpg', 'hf02-1_jpeg_jpg.rf.a0a892d28b56df405240eb87276522b5.jpg', 'HolsteinFriesiancattle137_c_jpg.rf.2fdd8f6c05940e3858fb6d4213dd7177.jpg', 'hf02-228_jpeg_jpg.rf.7184a8a8e9b26301a551a81ab80de9bc.jpg', 'img00124_jpg.rf.a4af9a7c716fb0b638c99d74730a719a.jpg', '-OWS_mp4-751_jpg.rf.6fc9fa14b858314051b7a1f1e4d77224.jpg', 'HolsteinFriesiancattle61_c_jpg.rf.58a736e6e2700e0686e0704b76ef1980.jpg', 'output_0286_png_jpg.rf.2bf1165757ffbfc4de80f06b0572ac93.jpg', 'group-cow-herd-feeding-grass-dry-field-tropical-natural-landscape-thailand-136072035_jpeg_jpg.rf.116e94dabc4415d273b0e0acf16efa42.jpg', 'hf02-108_jpeg_jpg.rf.cf9faf7b811862ba25f1957ea878293d.jpg', 'vaca214_jpg.rf.d2e6c49cdf7decb823ea8564af1665bc.jpg', 'HolsteinFriesiancattle90_jpg.rf.594529af75265b23c4ca2f35cb5a2f31.jpg', 'vaca259_jpg.rf.9ee9fe6aa032b69c554905d31b36cd27.jpg', 'Ayrshirecattle35_jpg.rf.f3acaefdad05b55b501d80f7a6ef0a57.jpg', 'img00094_jpg.rf.34ac1dee43b05339769cea8f3c30d1d5.jpg', 'HolsteinFriesiancattle109_c_jpg.rf.f3caa9c8c5b29955176752906997e3b7.jpg', 'HolsteinFriesiancattle60_jpg.rf.2007a7dbb85fa4a3eae43b876ba15de2.jpg', 'img00050_jpg.rf.72c1367c8a5eed9663a4a970dbceb31b.jpg', 'hf03-72_jpeg_jpg.rf.11d5a465fa364a32c2952f4ca2a41528.jpg', 'vaca40_jpg.rf.764e6cc1afdb9c7031077515ccbba261.jpg', '-OWS_mp4-635_jpg.rf.35e203cc3d8ba3510583e74076a1e743.jpg', 'hf03-66_jpeg_jpg.rf.681cfaa24665c624f9d42854e1229800.jpg', 'Ayrshirecattle74_jpg.rf.c0bdb24b35de5f46ca8b29f5acd6387d.jpg', 'vaca16_jpg.rf.02a2c34026e37a1ceaa0edff2b5ef6e7.jpg', 'HolsteinFriesiancattle70_jpg.rf.48b9de261799d1350e88c986b778ba88.jpg', 'vaca15_jpg.rf.98a1c14d4c7dc52ff558e1c34994e48e.jpg', 'hf03-92_jpeg_jpg.rf.0af1216910686bf3080e4e30c65959d6.jpg', 'Ayrshirecattle16_jpg.rf.3db7e0b01b1f14c4686b29ef15c8cd63.jpg', 'Ayrshirecattle22_c_jpg.rf.72fd618edee5e5c95e33b9fc570f8fd5.jpg', 'HolsteinFriesiancattle145_jpg.rf.ddaae50517579bb57b7d3eae88c20fcc.jpg', 'cuvfoemeboxjmzxhaczw_jpeg_jpg.rf.4726bc13a2df2fbdad90e0b64c1e5f03.jpg', 'vaca185_jpg.rf.0ae60dfb9ebae743f627abadd85dbffa.jpg', 'vaca285_jpg.rf.9da78211153dd1ae35c42acba9e74aa0.jpg', 'hf04-106_jpeg_jpg.rf.1827a2cbb574879b30185a48f5af9a0e.jpg', 'img00051_jpg.rf.24df9303b622ed5c1499a763e0f98328.jpg', 'vaca130_jpg.rf.03c7e0b473a3c90748c106bd792b81aa.jpg', 'hf03-116_jpeg_jpg.rf.150f2048418328433216f5c1297164d0.jpg', 'hf03-4_jpeg_jpg.rf.8c5fee07f0c752629dac70ecb156fc82.jpg', 'shutterstock_264580769_jpeg_jpg.rf.c5f9f65bd51724efe752d150c993f22f.jpg', 'vaca69_jpg.rf.431db55cc98b20b68dddf68e553716c1.jpg', 'vaca294_jpg.rf.96a829db9a2f326bdd623c4699b8e5f1.jpg', 'HolsteinFriesiancattle145_c_jpg.rf.d6b46d3bed0a4b8e83c10a9177bafe34.jpg', 'HolsteinFriesiancattle87_c_jpg.rf.22949ca77b6cc8bb2d2b066fe4c72aaf.jpg', 'img00043_jpg.rf.3f86a538fa4029624ea8d5a2a6ef0bd8.jpg', 'vaca237_jpg.rf.3775a0664fa4ed501a29c85324aede9c.jpg', 'hf02-26_jpeg_jpg.rf.5915b72c98ccf24ffc7256d13dafb349.jpg', 'hf01-68_jpeg_jpg.rf.7ff325d253e21c567ed9bf848325d39d.jpg', 'vaca12_jpg.rf.2106035012c6e27f048a279bddd84e24.jpg', 'hf02-49_jpeg_jpg.rf.736e91b8ef429d5ef878268fe99cabf1.jpg', 'hf02-143_jpeg_jpg.rf.ca40afdbd5d68d2ca74b7df4b2a6b4d9.jpg', 'Ayrshirecattle12_c_jpg.rf.7bc0cb914fefe9c78f72eb6f8aea754b.jpg', 'Ayrshirecattle86_c_jpg.rf.ee0e1a3d4c2f5634d211595bb09031f2.jpg', 'hf01-43_jpeg_jpg.rf.c2adecfe4c37151472e91ddfb69530a6.jpg', 'Buffalo_in_Vietnam_jpg.rf.6c030e061b3b94edbbf8f882483e7c42.jpg', 'hf02-71_jpeg_jpg.rf.1947fb092f106d4941ad2983cf132840.jpg', 'vaca110_jpg.rf.48918c0100bddb490219a846c1e43c13.jpg', 'Ayrshirecattle6_jpg.rf.29aaf94a9c08cd79feb079ff71fb70f8.jpg', 'output_0021_png_jpg.rf.283ca3713f3baf9420047b8d70776de1.jpg', 'hf03-28_jpeg_jpg.rf.f488106d32e43d5854f90cc7bb406753.jpg', 'hf03-39_jpeg_jpg.rf.1dd85ec1aa2059f26df3b61a5b7899fa.jpg', 'HolsteinFriesiancattle105_c_jpg.rf.5f4a602e515f7f7496cb0af5c9b2b7a1.jpg', 'hf02-102_jpeg_jpg.rf.72bf5374fc6d67f4d937711c3fa4b89b.jpg', 'hf04-96_jpeg_jpg.rf.d7fb68be08dbe55f4b00356cce41bcd8.jpg', 'Ayrshirecattle88_c_jpg.rf.8adfb3498a1d655fbca21468c63e554d.jpg', 'Ayrshirecattle63_jpg.rf.dd56aadada53b0c3483906be8ad1fe5e.jpg', 'img00008_jpg.rf.393eed36806234bedaf8ea912a36317b.jpg', 'output_0216_png_jpg.rf.971a20e98a7eb0e8e18da79088829629.jpg', 'vaca112_jpg.rf.d7c04615f0f445b043c75e73da5ae343.jpg', 'hf02-59_jpeg_jpg.rf.3eeb81e53a755ad407537a9c016ea048.jpg', 'hf01-30_jpeg_jpg.rf.75e6aef9ee324bfa67676e3693724156.jpg', 'hf02-113_jpeg_jpg.rf.41e9d563e1881d3504a1d15037b6ee97.jpg', 'img00078_jpg.rf.f74774ef7b8df95b1f12ad9372d12bc3.jpg', 'vaca280_jpg.rf.e5207de3f4f181b3d553f99ab1186cc1.jpg', 'hf02-33_jpeg_jpg.rf.9958f4300f0e9e996f3584de5fa87731.jpg', 'HolsteinFriesiancattle26_jpg.rf.465904236bf6d615979fb7d6a825b210.jpg', 'img00288_jpg.rf.5f3a15b8a859b689a7f1d69aae06e9ce.jpg', 'vaca255_jpg.rf.0a9d2c7197580e4ec11e197ba9c77a48.jpg', 'hf02-130_jpeg_jpg.rf.9191cff98bd4be4db8639512cdb852bb.jpg', 'HolsteinFriesiancattle104_jpg.rf.ce08ba3bd024d1eec74e8576b5166d7a.jpg', 'hf01-2_jpeg_jpg.rf.f9bd9485946803e6c8195b185de164c3.jpg', 'hf04-59_jpeg_jpg.rf.9f55a8de1f6324d07bb8a9a0b146618e.jpg', 'Ayrshirecattle20_c_jpg.rf.53b2403761fa589096065be4bb410bd7.jpg', 'hf02-121_jpeg_jpg.rf.b6385ccd604f625512236809097ae7d2.jpg', 'vaca293_jpg.rf.161388ce57b468d5adf5946939173b70.jpg', 'Ayrshirecattle54_jpg.rf.2a923dc9d435df2709e21130147ce983.jpg', 'hf04-68_jpeg_jpg.rf.4b629559d324aae9efbeed9eb18439e3.jpg', 'HolsteinFriesiancattle122_c_jpg.rf.db5cb322aae43a83e980fb49d153653b.jpg', 'Ayrshirecattle130_jpg.rf.7e17246d73e86e12bdbd07a54e524f93.jpg', 'hf04-26_jpeg_jpg.rf.70b2bda34a9adb42bd1f3c5257d97963.jpg', 'hf04-75_jpeg_jpg.rf.fada1c07e90ac5a63ba36461182199b2.jpg', 'HolsteinFriesiancattle56_jpg.rf.bc15c25cf6a2277062433df5ac21fb28.jpg', 'hf03-67_jpeg_jpg.rf.a945b91340308133e1c3a350ce0494e9.jpg', 'hf04-17_jpeg_jpg.rf.aa4088a703b39045d2549620880561e4.jpg', 'HolsteinFriesiancattle96_jpg.rf.37d952db5826e094b864eacc0d38632a.jpg', 'Ayrshirecattle141_jpg.rf.bcc30e79d20cb0d1e2aacaae253b8ab0.jpg', 'Ayrshirecattle8_jpg.rf.58d0b810cec47ab302e1b9d2f34139c4.jpg', '-OWS_mp4-414_jpg.rf.5d8af4c5353588e408b479bdd5d6f71b.jpg', 'vaca256_jpg.rf.54c34bb459acde4783bb57edc4806faf.jpg', 'hf02-234_jpeg_jpg.rf.957d976fad4ffe6b0ff603a98d5cdd23.jpg', 'vaca176_jpg.rf.58da64a17fa4f2ba77724faeee678667.jpg', 'hf03-64_jpeg_jpg.rf.f7a2db62e6bd18fbe5d504e33480dea0.jpg', '-OWS_mp4-256_jpg.rf.f441f18c91a2e314154d1ef6350a8420.jpg', 'Ayrshirecattle82_jpg.rf.8bbe0425058af6317e7bbee38d9a34d7.jpg', 'hf03-34_jpeg_jpg.rf.49325d9a3167fdd86b3d4619fbfff308.jpg', 'vaca53_jpg.rf.202b6e14f95f08ec26f11d0de2716f11.jpg', 'HolsteinFriesiancattle16_jpg.rf.2eba56bb864ce3d982d2be56ba211e1c.jpg', '-OWS_mp4-539_jpg.rf.bb1e1a4f4d05f84a4d8c432e433f6c6d.jpg', 'Ayrshirecattle142_jpg.rf.714042e5db1089505351b25b3abd2656.jpg', 'vaca227_jpg.rf.aab039f89727675db2cfaee1fd187ede.jpg', '7e1c7e1981144c49d18f824c2fa85aa6_jpeg_jpg.rf.3b988f997ae5cd14b9a627dc4d6a52f1.jpg', 'hf04-76_jpeg_jpg.rf.15cb48b7da02747d057572210442e2b5.jpg', 'hf02-80_jpeg_jpg.rf.9db25713bb94acc83b47cf4d7bb8ff48.jpg', 'hf03-16_jpeg_jpg.rf.61f5a0115f6ef481b016bad1e7491b95.jpg', 'vaca102_jpg.rf.6a299aeb48afadf7bb38cf0870d64c0b.jpg', 'Ayrshirecattle105_c_jpg.rf.2612df83f109f6c6ab76115859f463cb.jpg', 'stock-photo-mating-of-cow-at-countryside-in-thailand-1243734793_jpeg_jpg.rf.3d1de08e4638e5ff2ab6809f8c337fde.jpg', 'vaca7_jpg.rf.b49fe72c5af1540c0550ffa25eada6d4.jpg', 'hf02-114_jpeg_jpg.rf.a0ded2561eb00ffd660807ba57517faf.jpg', 'HolsteinFriesiancattle115_jpg.rf.99d7891674f61a0d44a8ea099afd8ff6.jpg', 'hf03-114_jpeg_jpg.rf.9d24915264f89764afa8ccf70518df6a.jpg', 'hf02-142_jpeg_jpg.rf.e569e6a36fda89dc52b3fe9d439bb8f8.jpg', 'HolsteinFriesiancattle45_c_jpg.rf.b0554134fb7b9a28b3601fbb8a991236.jpg', 'vaca290_jpg.rf.8281721d0ff000fd37273eea6fcb26f6.jpg', 'vaca229_jpg.rf.7d6620d322b644dfdad566e74411d16a.jpg', 'vaca54_jpg.rf.8a461b90bbe97da1f651dd52821d3ec0.jpg', 'hf01-48_jpeg_jpg.rf.b7e5ec7e39f735fb1dea2aa45d89453d.jpg', 'cows-mating-on-field-WFFT1E_jpeg_jpg.rf.5d95170e2cdf6a2555c79ff1e33b1c88.jpg', 'img00269_jpg.rf.08f2ac11dab20b2327fc253c0fc7eaf7.jpg', 'hf01-20_jpeg_jpg.rf.bba27328b16050b2b0bdabcd6103de70.jpg', 'hf01-23_jpeg_jpg.rf.534abff20fc7dee5b078457126d5e1df.jpg', 'Ayrshirecattle62_jpg.rf.4ebcbba04919710b0b9b62b76affc5ed.jpg', 'Ayrshirecattle62_c_jpg.rf.d75eaddcb39ddbc9370afe187f8a6b0f.jpg', 'hf03-113_jpeg_jpg.rf.610d93f5d2025295bb8291556c5b7be6.jpg', 'Ayrshirecattle117_jpg.rf.df4f74f46aeef65eadcb84b3767d7d21.jpg', 'a-bull-and-a-cow-mating-but-getting-it-a-bit-wrong-at-dorchester-oxfordshire-uk-2F25ADB_jpeg_jpg.rf.27b9d33b2461456735c391c108b2919d.jpg', 'Bulling-Cow-Being-Mounted-by-Steer-in-Overgrown-Dune-Pond_jpeg_jpg.rf.ccdccf561ee3ff741ebed6159a84504e.jpg', 'HolsteinFriesiancattle30_c_jpg.rf.94ec4315198c8f5bfffef4a13c694db9.jpg', 'HolsteinFriesiancattle9_c_jpg.rf.6d35fa794231d4df1410f10274ec07e4.jpg', 'Ayrshirecattle138_c_jpg.rf.b815482fba54adf0e15f384380229406.jpg', 'hf02-42_jpeg_jpg.rf.869e9fe34d493bb5e6c4fa25ea365e40.jpg', 'HolsteinFriesiancattle104_c_jpg.rf.0893493423eafab705c2572bfe037473.jpg', 'hf02-72_jpeg_jpg.rf.6b81617fc7130a01a05afb72633ee8f0.jpg', 'hf02-94_jpeg_jpg.rf.8da4ca09c1e039f9061965a0fe8f1195.jpg', 'Ayrshirecattle116_c_jpg.rf.961a69401edd40fcf395de65446670f6.jpg', 'output_0077_png_jpg.rf.fa15366d7ae6f2e6f00730e72dd722a4.jpg', 'hf04-44_jpeg_jpg.rf.b7ead7c8da001eaa7d2fc4e1e11f68aa.jpg', 'hf03-23_jpeg_jpg.rf.a7ca6c4818b176afc13e1356d2de18d9.jpg', '-OWS_mp4-62_jpg.rf.d1a5b0efa1dad76f9c294656056f27b5.jpg', 'HolsteinFriesiancattle37_jpg.rf.17d1f982748422603ef7e7dc3e486f4b.jpg', 'Ayrshirecattle75_c_jpg.rf.f94bc89a907577a06dffa4cc9c7f9a12.jpg', 'Ayrshirecattle56_jpg.rf.04c7894ee307ef650eb0376a572c3d63.jpg', 'vaca147_jpg.rf.9a14112e3a2d711b1a955ff654b415b6.jpg', 'hf02-96_jpeg_jpg.rf.026253b38e2dde0e1b718799301a42bc.jpg', 'HolsteinFriesiancattle67_jpg.rf.bba94d8b0fdcaeca91cf18fa48907ce1.jpg', 'vaca11_jpg.rf.1ac96d14b05dc2cefed0b1ecf431b96e.jpg', 'hf02-62_jpeg_jpg.rf.e72a8476b5a0ede9812e0d8d9c6becff.jpg', 'HolsteinFriesiancattle125_jpg.rf.2a5a2c8f8e72e739e358c236048c3d02.jpg', 'HolsteinFriesiancattle17_c_jpg.rf.7eb43fddf338d8bc7dc5671a88c73025.jpg', 'Ayrshirecattle7_jpg.rf.61f62bc08379350ab7b6e74978b28147.jpg', 'Ayrshirecattle46_jpg.rf.5db0f878e33e11add687b2d7493041fe.jpg', 'hf01-18_jpeg_jpg.rf.01dfdec78c8e2b6b7ed7e37853e209cb.jpg', 'images-23-_jpg.rf.3fb25dcb1e86e60ac317d0d6b9a1fcae.jpg', 'hf01-22_jpeg_jpg.rf.92cbeaa7a5f3e2500b0c92b7cf8ac2b5.jpg', 'img00363_jpg.rf.cef69e67ce428edc08759fa652781206.jpg', 'hf03-68_jpeg_jpg.rf.e152145c2b6f9906eaea15ca77f9aeae.jpg', 'vaca265_jpg.rf.0395a7e099f2f57081740d1b5d7a6b72.jpg', 'HolsteinFriesiancattle1_jpg.rf.f7f322ca1e7686ac1f0eb40c021afd1d.jpg', 'img00311_jpg.rf.59a2861b4d74cf83cdd74810ccda562c.jpg', 'hf01-54_jpeg_jpg.rf.2d35cd6a144775ce6bdd8e81d5749677.jpg', '-OWS_mp4-643_jpg.rf.b139ace7a9a3c9f22b4d1a11126b2d4a.jpg', 'Ayrshirecattle15_c_jpg.rf.5c43cfa376fbe122da85b8518eb56370.jpg', 'HolsteinFriesiancattle35_jpg.rf.8cad166e74d6d1450d3bebe5291fad96.jpg', 'Ayrshirecattle65_c_jpg.rf.af39a0a11ba6830a0682a07edf7eea3d.jpg', 'hf02-57_jpeg_jpg.rf.ec59a753dfc1eaf4feb9a3e7b1b30705.jpg', 'hf02-171_jpeg_jpg.rf.aec76d88f8ddfad4bc26a0c2eb1342dc.jpg', 'hf04-43_jpeg_jpg.rf.6c6daccc724a8e3ebb0f5938665cf389.jpg', 'hf04-102_jpeg_jpg.rf.85416fe0505058db86a13665380d2fe0.jpg', 'hf01-57_jpeg_jpg.rf.d60d85fce26d4a30b13a4b70bd0d0acd.jpg', 'HolsteinFriesiancattle19_c_jpg.rf.41b67dde9ec311f3164a4ed7727ffaf9.jpg', 'vaca123_jpg.rf.7b3f60f4f26eb602f06b28358ac2c4b4.jpg', 'img00138_jpg.rf.95f5d04a69610a0b2c20e8868a10c489.jpg', 'hf02-169_jpeg_jpg.rf.463d109e86bc56d19f4bad2a1a3b7b74.jpg', 'hf02-20_jpeg_jpg.rf.91393a305e40feec6d979474f8eec37c.jpg', 'HolsteinFriesiancattle135_jpg.rf.874642558827264ad486f3c2b33c72ee.jpg', 'hf04-92_jpeg_jpg.rf.4306f009432ffffcc31de576fc4b6425.jpg', 'HolsteinFriesiancattle107_c_jpg.rf.b65b1694603070f3ce81b1c48a1dfb24.jpg', 'HolsteinFriesiancattle109_jpg.rf.d0c31f833f573a8a6de7030dcf949b13.jpg', 'output_0310_png_jpg.rf.8104156ec9030ce684c84a13c51bc480.jpg', 'img00122_jpg.rf.bb273b40c24e8a147dd174abb7ea5ee1.jpg', 'output_0112_png_jpg.rf.4c50ece5e0bd7cc4a6ba1efd09c249ac.jpg', 'hf03-56_jpeg_jpg.rf.fd675e84651e0ef0d6eeff1bc8f9e36f.jpg', 'img00290_jpg.rf.6a86daec4c1f8b4dedbeeb20b9be1578.jpg', 'img00260_jpg.rf.1894940eedf4af222a5cfc02f4995318.jpg', 'hf02-74_jpeg_jpg.rf.fc6470e3d2a0a7ebecda8c0cbf59302f.jpg', '-OWS_mp4-17_jpg.rf.44735c904e68c58e34f4941bcdf33df2.jpg', 'hf03-90_jpeg_jpg.rf.1524738353c180ae1b966edd5874ff5a.jpg', 'vaca2_jpg.rf.7c1786b8a2ce5839cfbd6b5e4533a59e.jpg', 'hf01-16_jpeg_jpg.rf.900abbfc4f68c2f96a2babd81741cf85.jpg', 'vaca153_jpg.rf.d44557c1d06c0e54b7e42df80bfc27cd.jpg', 'img00445_jpg.rf.fd14e5b36fafe8f86ff955e56d991f33.jpg', 'vaca219_jpg.rf.bb7142bc8bf3bf5a4e18a067d19dd897.jpg', 'HolsteinFriesiancattle50_c_jpg.rf.50b0254f88e388fd373728880189c2c5.jpg', 'hf02-220_jpeg_jpg.rf.0e5fc80f95d0d6fe58fd73a0cc33fa24.jpg', 'Ayrshirecattle102_jpg.rf.80d75c66d775ce00bedac78bfa251968.jpg', 'download-1-_jpeg_jpg.rf.53d5e91f3a8f72d059f457b1a0715568.jpg', 'hf02-75_jpeg_jpg.rf.e2d695284b69dc6c46e343eebd0da30b.jpg', 'HolsteinFriesiancattle117_jpg.rf.92ae70f0a6c9e447d4940f45eef4051e.jpg', 'hf02-139_jpeg_jpg.rf.7bff60628b4ed67af06777db6a054fd8.jpg', 'IMG_20200704_122440-313x234_jpg.rf.b8ae79f748de5b9d4d5d79fcdb781e22.jpg', 'Ayrshirecattle97_c_jpg.rf.316f2d50aa1321ec58ce2c12af93eaa2.jpg', '4-cow-mounting-cowpg_RGB_jpeg_jpg.rf.ca3b4c9ed3ddf89efd109e288ff0999f.jpg', 'hf01-6_jpeg_jpg.rf.3fb5d7ebe2b753f57692a6d9c62e0d43.jpg', 'HolsteinFriesiancattle45_jpg.rf.4fa35380141d33f5386dad490bf7bfb0.jpg', 'hf03-104_jpeg_jpg.rf.3e72f395e3585c3f9bdc3cb08c6e2d83.jpg', 'hf02-162_jpeg_jpg.rf.5b4f9ce3f5781b065fb3391a98f4d0b3.jpg', 'Ayrshirecattle64_c_jpg.rf.323160769decb3bf1cccf0eea4f9e8db.jpg', 'hf04-105_jpeg_jpg.rf.94dbf0e9233a60d8fafb2a1d0873bbbc.jpg', 'Ayrshirecattle34_c_jpg.rf.56e97612e405d13627324bfba5b31386.jpg', 'hf04-100_jpeg_jpg.rf.829e8c5200fd0f5947a545d8c38a71fc.jpg', 'Ayrshirecattle106_jpg.rf.fe1f48f8314a23646d0ecf80c923dcc9.jpg', 'Ayrshirecattle27_jpg.rf.f3777c2e224acbde8676a282b1793f27.jpg', 'vaca62_jpg.rf.b4603df9ca84f6d05f5a702db34cd811.jpg', 'hf02-24_jpeg_jpg.rf.1af239892a7d2daf332583c767eda121.jpg', 'hf04-83_jpeg_jpg.rf.531e2e85d5d286f30269198bfb990218.jpg', 'HolsteinFriesiancattle112_jpg.rf.bc6074227f933032fd0100bc506d7ca0.jpg', 'Ayrshirecattle79_jpg.rf.77f09f4000023f8a2db9e65917b9d18c.jpg', 'hf03-110_jpeg_jpg.rf.bf69fdd9e5895e54f935288ce4373a3e.jpg', 'Ayrshirecattle145_jpg.rf.b29930bc8d7a2d4d92d1252e3cd0d276.jpg', '-OWS_mp4-739_jpg.rf.4d94e46eb42a1900a8366cd99f762d10.jpg', 'hf02-77_jpeg_jpg.rf.9a04d59742904087b61b7cfd22bb7ace.jpg', 'vaca65_jpg.rf.695cd1c4ab2cc04e787f2f45ba55ba1c.jpg', 'img00333_jpg.rf.70e799b7e9a01d186a5db4e6432c7de3.jpg', 'Ayrshirecattle36_c_jpg.rf.6787e8f6cd744ea6ee3f753e6c2dfac8.jpg', 'hf01-3_jpeg_jpg.rf.de7553618587e629cf1900f29f1f9b19.jpg', 'Ayrshirecattle51_jpg.rf.85799833695006eaabd81cfabb6dbc04.jpg', 'hf04-2_jpeg_jpg.rf.5247aeb9de12d4fa39f32b9786d8f8ba.jpg', 'Ayrshirecattle147_jpg.rf.dd2163017eb1f41de7bed68c674e8efb.jpg', 'vaca178_jpg.rf.0b907cd2c37ee867f4b02dcdf458988b.jpg', 'cattle-at-mating-season-2CBWAN3_jpeg_jpg.rf.23e4219cdd3f7766efa057ff4a957d6e.jpg', 'img00290_jpg.rf.a8f8b2f8ad4ff30c8130ed3747733a3b.jpg', 'hf04-53_jpeg_jpg.rf.467fbf350dd84236c9473dd06c7c91c7.jpg', '-OWS_mp4-176_jpg.rf.3beb71376abb547ff82e1cc8d21f7459.jpg', 'istockphoto-509111244-1024x1024_jpeg_jpg.rf.699ec92048e6592dee3da1466933f8cd.jpg', 'hf04-11_jpeg_jpg.rf.7baa651a3ceb8197de1ee34beade3d82.jpg', '-OWS_mp4-532_jpg.rf.c889cc43afde5a5c35ef162a8c7314dc.jpg', 'hf03-37_jpeg_jpg.rf.1bfff5b4e1c83ba1ad2fe8131c348337.jpg', 'Ayrshirecattle85_c_jpg.rf.3f23f5eaaac7d1e5fc947a2a7c38ccdb.jpg', 'Ayrshirecattle53_c_jpg.rf.686ab7b111dfe0cdf1a84ca15e2c354d.jpg', 'img00136_jpg.rf.678d5ad7584ddf5e1ce81ead73ddee97.jpg', 'hf02-78_jpeg_jpg.rf.50ebbbc52993e17c28ff69b7af48799e.jpg', 'vaca216_jpg.rf.38edb5587f92f329cc335ab3ea76a03d.jpg', 'Ayrshirecattle111_c_jpg.rf.f8d613a4ee9df282622ee7fb6744d5cf.jpg', 'istockphoto-472742107-640x640_jpeg_jpg.rf.fe58d0d05cc59ce970a59555f02c0d0f.jpg', 'HolsteinFriesiancattle147_jpg.rf.ca448e3827888049b18019fe12b0e1ef.jpg', 'hf04-61_jpeg_jpg.rf.b47ce3a5028e1f481b00f41f75c25b8a.jpg', 'vaca127_jpg.rf.9fa564d6f0d19406333c9e5bdacfffda.jpg', 'vaca124_jpg.rf.e25fe052de73482b5a28122a8e46b3cb.jpg', 'vaca58_jpg.rf.38c6e91c778c56702254abba3d136e63.jpg', 'hqdefault-3-_jpg.rf.bc498427f1a13eb4170418a0d34789a5.jpg', 'HolsteinFriesiancattle54_jpg.rf.06bd77cf1d457a7ebb39afb2776f8059.jpg', '-OWS_mp4-76_jpg.rf.36760e2071ab623447936bdb16a782a6.jpg', 'hf03-84_jpeg_jpg.rf.48a6d7ab7b718fd7fd7512a25dd162ee.jpg', 'Ayrshirecattle82_c_jpg.rf.96c878e61d4870218d63f3dda6f57cd4.jpg', 'hf01-65_jpeg_jpg.rf.36cb6afc6d18ed4943fa1285509e540a.jpg', 'images-42-_jpg.rf.49a0a93edb542fdeba44696650566e80.jpg', 'img00049_jpg.rf.8cd6528b0dbb383cbf9f849cb16b7c51.jpg', 'hf04-98_jpeg_jpg.rf.c83dc28e4ab1d8eaf00e74dfc18d846b.jpg', 'img00116_jpg.rf.5e62b489079f486fb0d8e528de5939e2.jpg', 'hf01-19_jpeg_jpg.rf.c46a4e26ea179eb4b4751b54825b16c0.jpg', 'hf03-45_jpeg_jpg.rf.65653972fcf27351b5cef814e78b8d9d.jpg', 'Ayrshirecattle77_jpg.rf.849b15d6750c24530bd159361d028b81.jpg', 'Indian-Sahiwal-Cow_jpg.rf.11866e053f35df743fa9a2a6220b7d25.jpg', 'HolsteinFriesiancattle66_c_jpg.rf.79d10194aaa2fbaa2527df8092d41974.jpg', 'HolsteinFriesiancattle93_c_jpg.rf.5fc39d86012fca626023acec7eb92f5e.jpg', 'img00250_jpg.rf.8233169d4ec7dbdf0462ef4e2561dc89.jpg', 'hf04-72_jpeg_jpg.rf.5777dc90bd8df912c2b345fc12dcf4ba.jpg', 'vaca113_jpg.rf.46cafca5a3f81308a8d1854dee31ba00.jpg', 'img00022_jpg.rf.873d2cbbf8735627a63d12bfafea756b.jpg', 'vaca222_jpg.rf.15124e8157caeb17d283b09dfcb33989.jpg', 'hf02-175_jpeg_jpg.rf.7ab2b97fe110135e77a00514560025cf.jpg', 'HolsteinFriesiancattle102_c_jpg.rf.1e77085b4bb51ca0dff541f1bd2e9a4b.jpg', 'img00173_jpg.rf.b1278efea29eef574533c8c1f6e35d79.jpg', 'vaca109_jpg.rf.12411cf2f44103528f7cc0a23fe80719.jpg', 'HolsteinFriesiancattle24_c_jpg.rf.00d285a135aae4616d4ac777ed5f54a9.jpg', 'zebu-bos-torus-indicus-copy-alain-platel-page_jpg.rf.e7e3ebe449c75a034a40faa2a4cca37a.jpg', 'output_0289_png_jpg.rf.ddf81d33fb5db12ce5115969ddb08e02.jpg', 'Ayrshirecattle60_jpg.rf.6fb0ced72066d04b74e5f9e9cd5d33f6.jpg', 'hf02-82_jpeg_jpg.rf.fd8693151dbda4901d589768617325a6.jpg', 'output_0172_png_jpg.rf.09b2f3df8bbc4ed2cf39cad195b8c275.jpg', 'HolsteinFriesiancattle137_jpg.rf.9fa5a2659d0fd52e2cca6bec99df7c4f.jpg', 'vaca228_jpg.rf.2f0c19590438fdd114f6177af552f3b2.jpg', 'img00073_jpg.rf.c864a8eb5d72d6f424dd6b924bb2045d.jpg', 'Ayrshirecattle1_c_jpg.rf.c0b51608ea9902cc6eeb99c6f562e23a.jpg', 'Ayrshirecattle38_c_jpg.rf.f381c5bcd72e54b31daad666d559aad8.jpg', 'hf04-114_jpeg_jpg.rf.a1bcf64409ed8446e1f1d93ff072cfff.jpg', 'vaca114_jpg.rf.491d156ef6ab18a0662228e4d09eec49.jpg', 'hf04-63_jpeg_jpg.rf.c77b48f4aa5dcd75bbdc91b00bda4a43.jpg', 'Ayrshirecattle67_c_jpg.rf.37e93e0400071254abb5ca6cb4458e32.jpg', 'Ayrshirecattle43_c_jpg.rf.9e98a7c67e9f60296781c1764b9cd0b5.jpg', 'Ayrshirecattle71_c_jpg.rf.dbec1b8e742ba9ced476a8443241eda4.jpg', 'hf04-27_jpeg_jpg.rf.f980b3966ff0e6d49b586568c5c6b441.jpg', 'HolsteinFriesiancattle86_jpg.rf.592bff799ca2c2bac38f1640152e5455.jpg', 'vaca212_jpg.rf.f72c482e316d7cb108942d012cf0353d.jpg', 'HolsteinFriesiancattle105_jpg.rf.b7d83af61d870472dcfefd2641b10d81.jpg', '-OWS_mp4-628_jpg.rf.0bd28f4bc3b9924d2861ea8be721b97f.jpg', 'img00188_jpg.rf.3bfc998ff7ebe070bde9332691002cf8.jpg', '6458092_jpeg_jpg.rf.0a9b140397e84a4be73e9b14748c7cea.jpg', 'vaca75_jpg.rf.b7d81a71811facd531bd7ed7660e771f.jpg', 'hf02-173_jpeg_jpg.rf.1b0c63d16f4d28426e81ddcfdf73faef.jpg', 'hf02-60_jpeg_jpg.rf.82379ef3a180bd6106ebaf8eda9f792d.jpg', 'hqdefault-5-_jpg.rf.009033c9e37b8e95dd3dbe0be0b970bf.jpg', 'Ayrshirecattle38_jpg.rf.4f634fd222b51880bcb4ba90b6e3f6c8.jpg', 'vaca184_jpg.rf.29659c93c0bcde27aa2041c7bcc22925.jpg', 'vaca91_jpg.rf.ac9d8b0b1670b45b44286a4ee9fb09e7.jpg', '-OWS_mp4-125_jpg.rf.1fc743df861b0674172fb10c419396e7.jpg', 'hf02-10_jpeg_jpg.rf.56b66d1af222f09d3a71e446a8e76e79.jpg', 'img00149_jpg.rf.1c04cd0814a707b797a865b39f3042d2.jpg', 'HolsteinFriesiancattle2_c_jpg.rf.0abd3be6cfeaa4ec4ae4e6f56ab4959f.jpg', 'hf02-152_jpeg_jpg.rf.3cdd825a56d67691de16a647b62df139.jpg', '0174798_red-cow-for-qurbani-sraf002-removebg-preview_png_jpg.rf.c6b73246f48c43ecb99912408a8b7445.jpg', 'vaca68_jpg.rf.0c47919a721abce39986005c5dc26154.jpg', 'HolsteinFriesiancattle128_c_jpg.rf.2d5c382329fcb72dc5e06219b141802b.jpg', 'Ayrshirecattle66_c_jpg.rf.020e22565857c012f3b78816671d19bf.jpg', 'hf04-58_jpeg_jpg.rf.db60449914c2c58658a5020e7d5d2743.jpg', 'img00079_jpg.rf.c5625c6c9d4932c9777d51a6696a74a3.jpg', '5008786891_79c0f12816_b_jpg.rf.15d82cb2af465dd29d1594658fdbdd5d.jpg', 'Ayrshirecattle64_jpg.rf.f9474b61ae482b5b4358e2a40faab6e7.jpg', 'vaca115_jpg.rf.0ab86a869e3ec5abded534997a77a8df.jpg', 'hf03-69_jpeg_jpg.rf.136433f62f94813066f67d5c0dfc6778.jpg', 'hf01-55_jpeg_jpg.rf.4def53c6fe2a5e2ebc94c8f2536ebde7.jpg', 'img00041_jpg.rf.4ee641b82f1e4efdf6e8f249adec6d1c.jpg', 'hf04-88_jpeg_jpg.rf.d5aaa89b24389d1316e39afd5e7ac758.jpg', 'img00437_jpg.rf.ebfb94c8d34e9c8ce4c0ed7e63e9a749.jpg', 'hf02-150_jpeg_jpg.rf.921d2638f4e113f0a88bf3333b70a23a.jpg', 'Ayrshirecattle95_c_jpg.rf.00c835c01412544613eac4686eb7b6fe.jpg', 'hf02-233_jpeg_jpg.rf.69d3e62b167e8bbf5ad6eec452febd6e.jpg', '-OWS_mp4-123_jpg.rf.cbbeabac2f865791829c2fb8adfdafe5.jpg', 'Ayrshirecattle118_jpg.rf.637a35b80f7661b278f30aebefe8da88.jpg', 'cowesturs_jpeg_jpg.rf.926e4df347c7ad04f815e13a66d3bd2c.jpg', 'hf02-193_jpeg_jpg.rf.b8eff09dc9e96a307b2f694bfeda9c1b.jpg', '-OWS_mp4-239_jpg.rf.63ad3894bc13a7c893f8a1bcdecc7d9e.jpg', 'hf02-106_jpeg_jpg.rf.17fd0053badd9e22b0d32a49e5021c30.jpg', 'vaca181_jpg.rf.1a5ea4f8ab94c6b0e9f9b63f5a449332.jpg', 'hf02-136_jpeg_jpg.rf.13089ce7bc57575eb8dce7001e1e5f4c.jpg', 'efc7e546c588f949459e5c259c710687_jpg.rf.f1ae66fd624dcadf54df907c96ba4eed.jpg', 'img00009_jpg.rf.99a7d55f71d7c737bfda40dc99142143.jpg', 'img00173_jpg.rf.3800753f1a044874bf640e299f5a5771.jpg', 'Ayrshirecattle1_jpg.rf.fb0304d9c23c2ec3529288c731b5ffcf.jpg', 'img00451_jpg.rf.3ea44216c1dd2d1e889fd69721d9ac40.jpg', 'hf04-37_jpeg_jpg.rf.e1c01c35a72d96539bbdf35ad818c01a.jpg', 'hf04-48_jpeg_jpg.rf.430e9b9a66bcb28edfeb07143f5f7df5.jpg', 'vaca70_jpg.rf.14ba2251dfc4a2d3959ef5605726cd03.jpg', 'HolsteinFriesiancattle66_jpg.rf.4a4be297d8cfedc0ee3963b5815c7bd8.jpg', 'Ayrshirecattle10_jpg.rf.5629485e2b3883124a9b55cae3ef5e17.jpg', 'hf01-40_jpeg_jpg.rf.5cd03dab653dd911c109470e0ae5827c.jpg', 'cow_shutterstock_jpg.rf.3c48b2e2897440f642457b472e3e0e42.jpg', 'vaca32_jpg.rf.3e744c58c55750feecb179a1ea33f97c.jpg', 'hf04-70_jpeg_jpg.rf.794f23fe1e4690dbdfe47ba7fdd13c6b.jpg', 'Ayrshirecattle30_c_jpg.rf.1a9ced51d214cd92a821bfd512d8fe2b.jpg', 'img00131_jpg.rf.19282f198a16014a019dc70633fabb68.jpg', 'vaca235_jpg.rf.12fd135c8e225bdd90a58479bce9f06e.jpg', 'HolsteinFriesiancattle62_c_jpg.rf.99ef312c4cadb2089411cc035251d63f.jpg', 'hf03-58_jpeg_jpg.rf.682cec4e31cb60fa4f275129bca9eca0.jpg', 'img00210_jpg.rf.405635ce421558373a765415f0b3297a.jpg', 'vaca220_jpg.rf.7eb7157c5d0f0aac9eb36de9dbc6c2ed.jpg', 'HolsteinFriesiancattle25_c_jpg.rf.ccc17a7d84650874882b214f90da12e8.jpg', 'hf02-100_jpeg_jpg.rf.09ee6c3c2a6e60da9a664b3aaedf8590.jpg', 'Ayrshirecattle9_jpg.rf.4db0d45c73c4295b507c9ed7acee58e1.jpg', 'vaca183_jpg.rf.aa7e84d2ea01610234a0046f4100176a.jpg', 'vaca240_jpg.rf.ff52de889c988f4dc3ec25ff53d16324.jpg', 'Ayrshirecattle26_c_jpg.rf.8be4c58309f8704d0db9d4696209b118.jpg', 'hf02-197_jpeg_jpg.rf.822f6c959aea73419e5552e536db6226.jpg', 'vaca186_jpg.rf.8f0ac2771d232ed9a41655f6f61b3668.jpg', 'Ayrshirecattle3_jpg.rf.6656e7006a4fa8bf6ea3aacf3706c836.jpg', 'hf02-29_jpeg_jpg.rf.02f35eec920b910c1d685485a428067f.jpg', 'hf03-70_jpeg_jpg.rf.6b443603f63ce9562df626bfe60f7567.jpg', 'hf02-40_jpeg_jpg.rf.c3e6b0e952b522e055a98566a9ca7132.jpg', 'vaca52_jpg.rf.31f58d3d3b6e4f350b2a300384297249.jpg', 'img00151_jpg.rf.7dac751f570fcadfcf4d57f915c5d61b.jpg', 'HolsteinFriesiancattle116_jpg.rf.9237de1e05e0af408647c70d8e0c96df.jpg', 'hf02-86_jpeg_jpg.rf.6eb3259a339fb24cebff7ade1a67ca41.jpg', 'HolsteinFriesiancattle30_jpg.rf.9961b867394e19595192b5e1025d86aa.jpg', 'hf04-22_jpeg_jpg.rf.eb3000ae45a23ff621aaa8c2df65898b.jpg', 'hf02-151_jpeg_jpg.rf.b8f6620500f21784a4333e175607ecac.jpg', 'vaca66_jpg.rf.5cfe0cb8e2c616901f2c0bc47eb74af0.jpg', 'Ayrshirecattle116_jpg.rf.aa4e9e14d02306f4141994d448518be5.jpg', 'HolsteinFriesiancattle5_c_jpg.rf.db6d37f8b464c3d12553f810946ebf35.jpg', 'hf01-36_jpeg_jpg.rf.55cbc7de234a95f7e43facc4f42dddfb.jpg', 'hf02-125_jpeg_jpg.rf.aa92d4d804a65e6724a806ebae74d4da.jpg', 'HolsteinFriesiancattle9_jpg.rf.b7e4ca751c76ad07a4f52a8cd3243e13.jpg', '-OWS_mp4-194_jpg.rf.82512bd64ee734613867e018fc49f96b.jpg', 'img00158_jpg.rf.79ca6a94d7eb2d2abbcc3ce3abd22805.jpg', 'depositphotos_207100700-stock-photo-closeup-male-calf-nellore-crossing_jpg.rf.a5b4e14be1b707e0f728d5cd99be9250.jpg', 'vaca193_jpg.rf.07976c6993eebcbddb01761d6336998f.jpg', 'hf02-116_jpeg_jpg.rf.101e8aec748ed2eea2c67ca74347bf9a.jpg', 'vaca151_jpg.rf.5a484b1dd07f811ee6fe14a97a8a62a1.jpg', 'HolsteinFriesiancattle94_jpg.rf.e32e5cb69b89c0a3fa0d7f7f25c2feed.jpg', 'img00172_jpg.rf.82c735c4f1ddfc02d482241c47c72827.jpg', 'vaca261_jpg.rf.9a0330b1c345144dde869b839ed6f565.jpg', 'SHAKTI_jpeg_jpg.rf.eda58d1e0ae6b66e5535fec3b7171784.jpg', 'Ayrshirecattle63_c_jpg.rf.d69645b947ae059cbf690c4e32b204d5.jpg', 'img00272_jpg.rf.f81849c694b8e81772830ee1e0e5f3de.jpg', 'hf03-88_jpeg_jpg.rf.1401477b70222ac2b33c14b36ca5e005.jpg', 'vaca291_jpg.rf.773f82faf417329bf7138d5072a5d5e1.jpg', 'output_0041_png_jpg.rf.ddcd270969e829ea99abbf4e1caa1aa1.jpg', 'hf03-99_jpeg_jpg.rf.45f641932a363841cc2efb57105f88da.jpg', 'output_0222_png_jpg.rf.0735c2c3059e1d5296f8673a65b8023a.jpg', 'Ayrshirecattle127_c_jpg.rf.f3bd3d927abe49def34d3b5f337a41f6.jpg', 'hf02-135_jpeg_jpg.rf.3c8fb33e51cd6ff693d300764973f6ee.jpg', 'img00042_jpg.rf.7dd1f09b16a842a894ea8b964a752d04.jpg', 'hf02-215_jpeg_jpg.rf.8985475b5281b992cf644a9e87b4a426.jpg', 'vaca97_jpg.rf.bed338db15a946a86b2514221675a3a8.jpg', 'maxresdefault1_jpeg_jpg.rf.e686cf08d830d17d3d66a1cea8fac985.jpg', 'hf02-52_jpeg_jpg.rf.12daf4b721386b106c272acf53a6df94.jpg', 'hf02-168_jpeg_jpg.rf.d893df31e6c1dd0ca4dde3689db11a5f.jpg', 'hf02-98_jpeg_jpg.rf.1cb634eede3d989e94553b3a9d195b79.jpg', 'output_0225_png_jpg.rf.01212e5bc912aea6eaf0e047809e7cab.jpg', 'img00155_jpg.rf.52cacf1b25833487d066e06d8f804814.jpg', 'img00044_jpg.rf.9c15679266f445d93f3e9a8d4d5bcaa4.jpg', 'vaca35_jpg.rf.e8540c4670d07764dc7f073e3f2d7b00.jpg', 'vaca279_jpg.rf.d5457783fcdaf566ec2f1136c61bae3f.jpg', 'hf02-56_jpeg_jpg.rf.295158c3a777490cc38e9a6d6c8fa4f5.jpg', 'vaca271_jpg.rf.8d9e38ee40ef431a6e9596aad5065b3a.jpg', 'fr_2016927161816_jpg.rf.424f129eff9778e50fd2f12343745ae5.jpg', 'Ayrshirecattle85_jpg.rf.26995ab8569de749fb1d595194ebe8ee.jpg', 'Ayrshirecattle124_c_jpg.rf.1ce9cd1ef6f20d6f5c5650e3e1a3a14f.jpg', 'images-2-_jpeg_jpg.rf.1bc78825ba462ade631e00bd1fd8eecb.jpg', 'hf02-180_jpeg_jpg.rf.e7cb871b0db298c4f3bff762f0c5e81d.jpg', 'img00089_jpg.rf.bd77b6234acd283cb72ea52d9411fa92.jpg', 'img00295_jpg.rf.8d9a7c00b4c1c4840af7d2166a512ebd.jpg', 'hf02-224_jpeg_jpg.rf.50c274a2aeaa1dd729c8a9050999d46f.jpg', 'hf02-73_jpeg_jpg.rf.a8bcbb33fd0e88de78a3ebdd7b1844d3.jpg', 'Bull-picture-Aaron-Berger_jpg.rf.b41154eb727a2b3d97beb6ef83d4bf9a.jpg', 'hf02-147_jpeg_jpg.rf.7c774eb3e97b382149cb9a965b092a03.jpg', 'Ayrshirecattle70_c_jpg.rf.ffbdea2feead39509b339c05c78173a3.jpg', 'img00070_jpg.rf.44a3d10009240bf6f5069707aa9ac8b3.jpg', 'hf02-83_jpeg_jpg.rf.f1cbb1e2988104fec9b5d65c71737185.jpg', 'Highland-Cow-in-Heat-Being-Mounted-by-Another-Cow-in-a-Field-of-Bog-Myrtle_jpeg_jpg.rf.e07c706f73bf0723fb254e1dc41ded5f.jpg', 'hf03-111_jpeg_jpg.rf.ea2498454645a91754a8035f6e27223a.jpg', 'Ayrshirecattle27_c_jpg.rf.a9caa48f1e7809ca1cf12e0978ca2a99.jpg', 'HolsteinFriesiancattle36_jpg.rf.0fdf9af06b46009ec729a53036b43672.jpg', 'vaca234_jpg.rf.6c27fa5f1bcd77c760f2d7ad75ed35b8.jpg', 'Ayrshirecattle78_c_jpg.rf.306a784d1938b041934e736c657524e3.jpg', 'HolsteinFriesiancattle29_jpg.rf.25c39499a33951048168eb03b4542dac.jpg', 'hf02-187_jpeg_jpg.rf.d420d049c77bdb0cd5f63aef920d174d.jpg', 'HolsteinFriesiancattle122_jpg.rf.49ea976f82f03baeca4c9ca6259901e8.jpg', 'hf02-178_jpeg_jpg.rf.e9ffa44d87813c1f312d88bba1b9a5af.jpg', 'hf01-15_jpeg_jpg.rf.f0fe72a52dad80f58aa360f5c6242f61.jpg', '-OWS_mp4-690_jpg.rf.e8da20fb51a41a8e72eb4a00c2ae113a.jpg', 'Ayrshirecattle68_jpg.rf.5c826d5b636b97a83fc8cd63f541d51c.jpg', 'hf02-140_jpeg_jpg.rf.479d417174a046fc2734a49a74b1266b.jpg', 'vaca233_jpg.rf.7c479cadd6966799192d1777b736419b.jpg', 'Ayrshirecattle17_c_jpg.rf.a8953ee2afa7a71366d6a2fff0b9ed44.jpg', 'vaca10_jpg.rf.05325988653fc29713bd60e325476ace.jpg', 'img00226_jpg.rf.fd3f501f093f1c013efe92998de25493.jpg', 'Ayrshirecattle144_jpg.rf.79b84bdb5899852c44bbccac2966b576.jpg', 'Ayrshirecattle10_c_jpg.rf.0fbd888f6d6cb20d202894c4ec1e27ba.jpg', 'Ayrshirecattle11_jpg.rf.885fcb09514ae9600f7dfbac986c515f.jpg', 'hf03-103_jpeg_jpg.rf.f986e0c24afcd40d90179d2d9775fa5d.jpg', 'hf02-214_jpeg_jpg.rf.5682e8047105d75f896963826b5c55b7.jpg', 'hf03-33_jpeg_jpg.rf.e388fb8fed51ca2fcfadf74f59cf71a9.jpg', 'hf01-35_jpeg_jpg.rf.03ed3e49b9c646e21dc3844a0ccfeb8c.jpg', 'HolsteinFriesiancattle121_c_jpg.rf.0203f9678ae5b8538ad7daa917bf2add.jpg', 'hf03-50_jpeg_jpg.rf.0bddfec6e98bc9274b463972c6ba6f2b.jpg', 'hf01-34_jpeg_jpg.rf.0316d7c6a2e55699139c0870361ae8c6.jpg', 'hf02-7_jpeg_jpg.rf.817894acd1752a7d5d370e3bad2bf24d.jpg', 'Ayrshirecattle72_c_jpg.rf.13b2ac966187e1bcc273aa5273c1aec6.jpg', 'hf03-101_jpeg_jpg.rf.e0b14ae79dfed276c96fc85da93101d2.jpg', 'hf01-28_jpeg_jpg.rf.f9351af4b69e1e0479634c51901fc897.jpg', '7982303_jpeg_jpg.rf.2bd72a734e8fe680ec62f7b409b29fd3.jpg', 'hf03-24_jpeg_jpg.rf.02412fefa1de03910cf81e1d0dabbb18.jpg', 'vaca218_jpg.rf.8942152104767c67963f8973472c8a61.jpg', 'output_0094_png_jpg.rf.b0a636ebee340ed82302bed303311b5d.jpg', 'vaca188_jpg.rf.927021b541f06967d397405238df2cdb.jpg', 'hf04-16_jpeg_jpg.rf.a0f5a52a30fc1ced359b91e6d1ecb7b6.jpg', '-OWS_mp4-669_jpg.rf.0fa03ca88efa44a7caaa20a028d9a4da.jpg', 'output_0107_png_jpg.rf.78d6f4de0e24226bc3bc697b1aa527ec.jpg', 'HolsteinFriesiancattle140_jpg.rf.68a7dadbad259b4faa200cbc6363696f.jpg', 'HolsteinFriesiancattle106_c_jpg.rf.fcd37169bbcf91d51b048e5d0c79a335.jpg', 'Ayrshirecattle98_jpg.rf.598e535fc620fed321b85ea1ddd622a4.jpg', 'hf03-93_jpeg_jpg.rf.abe865e00b38878800531a25c65660da.jpg', 'Ayrshirecattle75_jpg.rf.dd3b4c534c5a4100266cb612e7b3c71e.jpg', 'vaca174_jpg.rf.314a76c517d83ffb8b946e79ccf3a8e3.jpg', 'vaca160_jpg.rf.fdb26ac76c93884212dfba57af44b1e1.jpg', 'vaca39_jpg.rf.4597b56e8ae4d4f28ca818a589bb7355.jpg', 'hf02-23_jpeg_jpg.rf.b60eec7d0921f9999a0f6b3eb0be6e6d.jpg', 'img00273_jpg.rf.62db5abf3fe45d6ac0396ec512a19fd9.jpg', 'img00459_jpg.rf.2b59513ed816e96be1b3a69a5f7873ad.jpg', 'hf04-84_jpeg_jpg.rf.e4608a49b358986da4a9169ac6a237b3.jpg', 'output_0091_png_jpg.rf.6419cef532c32b8dc06b8ab0139e44bb.jpg', 'Tail-almost-touching-the-ground_jpg.rf.8cb12b8fa449b04c72d941aada39ac15.jpg', 'hf03-49_jpeg_jpg.rf.32ac76b696134815058f2f3ca9714034.jpg', 'hf02-25_jpeg_jpg.rf.1b94232d08178276609b858d41ae7404.jpg', 'hf04-40_jpeg_jpg.rf.441a8c4367d1bf5840bf012f5445383e.jpg', 'vaca173_jpg.rf.a08ec2a6ccba3f66186daa2811a2017d.jpg', 'Ayrshirecattle22_jpg.rf.b9fca2a9b3181d103a26708da8bc199d.jpg', '-OWS_mp4-582_jpg.rf.8e6710dceee2c77414b61a3cf1160226.jpg', 'hf02-14_jpeg_jpg.rf.81af84437e1aa19613ef9bde3147135d.jpg', '-OWS_mp4-515_jpg.rf.959084bc8a2401694a85e14ca611e1a9.jpg', 'hf01-8_jpeg_jpg.rf.3a915f2167c63d484c46364a02d11166.jpg', 'img00083_jpg.rf.d8c1ae392236457a868ef61c9d3a26a2.jpg', 'Ayrshirecattle53_jpg.rf.99d0ceaffed02f2e1dd107c58dae4718.jpg', 'HolsteinFriesiancattle31_c_jpg.rf.dbffbd5e405f84c4bb14e2de5c6470fa.jpg', 'hf04-20_jpeg_jpg.rf.a39da870d356d3207f1d72d126bb31d9.jpg', '007-030_jpeg_jpg.rf.505d57c4fcbb77ea9acac59103911fb1.jpg', 'Ayrshirecattle39_c_jpg.rf.444a7560250aa21e976a4a90b9633d94.jpg', 'vaca268_jpg.rf.d58c38101937c72f254638c8313527f6.jpg', 'hf02-154_jpeg_jpg.rf.a9622f384e8ed98e562290c44009c4da.jpg', 'Haryana-Sahiwal-Cow-removebg-preview_png_jpg.rf.16b5146d6b70391687837e688a0acee7.jpg', 'hf04-94_jpeg_jpg.rf.1bba722a1757cfaf64006a686b54ba7d.jpg', 'vaca57_jpg.rf.a96390514ed541f55f8af32d7a03d0bd.jpg', 'HolsteinFriesiancattle95_jpg.rf.bd0402feb123e618151a543aedc0fdeb.jpg', 'HolsteinFriesiancattle82_c_jpg.rf.8d2bef0b2009c697e3ed007edeb9de12.jpg', 'HolsteinFriesiancattle129_c_jpg.rf.98616d0605c7e7bb67af54af5a5da380.jpg', 'hf04-42_jpeg_jpg.rf.190619f2a8f3f5db589faf42c5a0ad12.jpg', 'vaca24_jpg.rf.50a410695fe407d0b37f796c6b4de6eb.jpg', 'img00242_jpg.rf.909dc89e274ae6ea968bdb7cdb04c5c6.jpg', 'hf03-44_jpeg_jpg.rf.7e862518c49d1d0e7c26aafac0fadc07.jpg', '-OWS_mp4-80_jpg.rf.477615f0b33f3923c7441daefc8f4fe8.jpg', 'Ayrshirecattle107_c_jpg.rf.94743495a64f99326614a03202839ec6.jpg', 'hf04-41_jpeg_jpg.rf.5d20e7737425df72302fb30e9aad8fb7.jpg', 'img00371_jpg.rf.f98278bb5da4c39e9d039aa4bc721f4d.jpg', '-OWS_mp4-584_jpg.rf.1addb0e2725e5feccb8d303c0fbbeb29.jpg', 'vaca9_jpg.rf.1361de5187f27f27766b7d43ce4d6da0.jpg', 'HolsteinFriesiancattle49_jpg.rf.4dd6bf8dc7135a7443c04446cf74c5c6.jpg', 'img00232_jpg.rf.b8495736046bd1b279fd6037fbbe97af.jpg', 'hf01-67_jpeg_jpg.rf.57cc4f05e861f4ce8893ffe39d632bb9.jpg', 'hf02-3_jpeg_jpg.rf.f4811175a81c22671947ee1afb468189.jpg', 'HolsteinFriesiancattle133_c_jpg.rf.cab8c97af1874e1a205e7c3c55b230d2.jpg', 'D577_16_010_0004_600_jpeg_jpg.rf.1764905547be00fab0b502ab6e096da6.jpg', '-OWS_mp4-406_jpg.rf.2eb6902779423eb90c3fba527f58e1b9.jpg', 'hf02-11_jpeg_jpg.rf.32111dd2acaae0f82c70f5f2f1ddc418.jpg', 'Ayrshirecattle17_jpg.rf.474ee61b2f81f285eafdc311361d5ec4.jpg', 'Ayrshirecattle139_jpg.rf.e6a681d870b2d58ab4cdf10eb81b5dad.jpg', 'Ayrshirecattle98_c_jpg.rf.e65e3b3bcf3bbb5f4b375cc311ae6538.jpg', 'HolsteinFriesiancattle133_jpg.rf.71465065f3a2c4991561e722fdde7e13.jpg', 'img00404_jpg.rf.007682ca569928ee7194c534a2d8f74e.jpg', 'hf02-229_jpeg_jpg.rf.7e7e30687e1d6a8854fbd9d1e72ee23e.jpg', 'images-38-_jpg.rf.f1098ac1e01380afb071a41fab4f84b6.jpg', 'HolsteinFriesiancattle63_jpg.rf.3995ef2c9e12182714d4fc2168910193.jpg', '-OWS_mp4-417_jpg.rf.af406ff624bad9fc8c51b4e52081a46a.jpg', 'HolsteinFriesiancattle71_c_jpg.rf.fca0b7716e66596ede6fcac9af059787.jpg', '-OWS_mp4-36_jpg.rf.bd1b0d98c20247b68756f24925dc2616.jpg', 'hf02-22_jpeg_jpg.rf.13873ec9c7f45aac07d714dc25f8284f.jpg', 'hf04-52_jpeg_jpg.rf.d965d3ba1a97bc584ceaa6ce9e92ee7e.jpg', 'HolsteinFriesiancattle53_jpg.rf.92422251bf4f09743f1e9407beb4144d.jpg', 'HolsteinFriesiancattle57_jpg.rf.6b2c6602ccd0ff9ba7f61e6867a84135.jpg', 'HolsteinFriesiancattle35_c_jpg.rf.5bc72ffa2286fd193eec0a0fccdec653.jpg', 'hf02-105_jpeg_jpg.rf.8f44ac147d9e91f4f3ed45b85b38a538.jpg', 'vaca131_jpg.rf.c7fafa49ee9774f5bc2519e7592b087c.jpg', 'output_0099_png_jpg.rf.28dbf5cb22380757006b2a4c26459608.jpg', 'HolsteinFriesiancattle90_c_jpg.rf.b31590ffc17b60298a528983931a9b9a.jpg', 'HolsteinFriesiancattle15_jpg.rf.301e052c1f293273862a69d695aa8e5e.jpg', 'Ayrshirecattle148_c_jpg.rf.4e4fc7e6d9e4b09203ed931128884675.jpg', 'bedt8_jpeg_jpg.rf.11c596f26d3e9c67fd9b97b7f0051443.jpg', 'output_0133_png_jpg.rf.0d4a60b5e2a44b4d932396069f8b5b95.jpg', 'hf02-137_jpeg_jpg.rf.d851c0268c8e6f33db846b71312e4024.jpg', 'HolsteinFriesiancattle84_c_jpg.rf.e6477b070df04155885c590b12bc874c.jpg', 'Ayrshirecattle137_jpg.rf.70ddf6a4e9c006ceeb21143e1e14bb9d.jpg', 'img00058_jpg.rf.072458656b0455b0a027e3a491c8508c.jpg', 'HolsteinFriesiancattle143_jpg.rf.0cdfea852b5393ce966c66c3e270976a.jpg', 'vaca223_jpg.rf.4e1d008024090eeed1d2899eaac300da.jpg', 'vaca262_jpg.rf.304850e63ef7c2f51849ab01e396e39f.jpg', 'HolsteinFriesiancattle98_jpg.rf.a61a98ba574dcaff5d2773cda9cd336f.jpg', 'hf02-97_jpeg_jpg.rf.27f850d30989b0bb3e07bcb3e978dd54.jpg', 'Ayrshirecattle12_jpg.rf.f2803726f5dfeb50befbcdb204349308.jpg', 'HolsteinFriesiancattle144_c_jpg.rf.30dc5e1c826abc580652ecc2b3548837.jpg', 'hf02-219_jpeg_jpg.rf.8c3ccc8745a6864fbb736bbbb811d028.jpg', 'hf04-9_jpeg_jpg.rf.9ce3017ed8b5cbed747f2c6e47ddb38c.jpg', 'vaca241_jpg.rf.c024d5298c7d186397b90a102231a5da.jpg', 'vaca272_jpg.rf.92c93eeb3160b3bbcad8401a2eb741b2.jpg', 'hf03-91_jpeg_jpg.rf.0150a96bb2f0405e86b4e1d6ba087da1.jpg', 'hf01-63_jpeg_jpg.rf.4e9a71975269311d5a9a70998e792e24.jpg', 'img00293_jpg.rf.4477f4a26762c39fec5713feb36fca43.jpg', '-OWS_mp4-267_jpg.rf.d80a51469b042c50a0e0dbcb569bddd9.jpg', 'Ayrshirecattle44_jpg.rf.140a3aa1bdbdb2bfcc477726e6b95b9c.jpg', 'Ayrshirecattle25_c_jpg.rf.d7a39b4c62a6664edc1c239a7d5af6c2.jpg', '-OWS_mp4-719_jpg.rf.ca485cdd544621864191cebebbee8409.jpg', '-OWS_mp4-49_jpg.rf.376f7fd48fb5a3c3d749be2d93640a34.jpg', 'HolsteinFriesiancattle118_jpg.rf.647bb067c9f03044039609da74c45576.jpg', 'img00198_jpg.rf.4137c5d5d7d0421db13ec9edb64a70b0.jpg', 'nhung-bai-van-ta-con-bo-hay-nhat-jpg-rs650-removebg-preview_png_jpg.rf.f2824c8105973ea0965dca79a05d9f16.jpg', 'vaca161_jpg.rf.27a7a4227926dfc4013ba78453653c82.jpg', 'img00360_jpg.rf.ae2710fa88e026fe20fccafa4f780b8e.jpg', 'vaca205_jpg.rf.dc3ea376a6cea266803deeb07d85f947.jpg', 'hf04-113_jpeg_jpg.rf.4f94b9c746f97e4972f10edb6ec0a4af.jpg', 'hf03-35_jpeg_jpg.rf.c6dcff52a1875a4250fea10286580128.jpg', '-OWS_mp4-463_jpg.rf.3c1cf97472d255d129253e0a3af34043.jpg', 'hf02-164_jpeg_jpg.rf.60fc899586c64db293dfaa7401c68ab0.jpg', 'unnamed-20-_jpg.rf.704073ce37525d234fd59939b8020ea1.jpg', 'output_0047_png_jpg.rf.07d4a92e21fb71cefce86c407c1c220b.jpg', 'img00223_jpg.rf.7e4420d7f36f7df5bfc021963edf0866.jpg', 'hf02-90_jpeg_jpg.rf.40374c570d7a7115a0fd6d38217369fc.jpg', 'hf02-176_jpeg_jpg.rf.0446f857037f2bc3b4f9b002a8a8ebb1.jpg', 'ankole-watusi-isolated-white-background-male-164120187_jpg.rf.df001be323910e8dc1dcb8bf2b7218c4.jpg', 'HolsteinFriesiancattle94_c_jpg.rf.569ce1f04454e5fcbabb9161b80ad608.jpg', 'hf02-4_jpeg_jpg.rf.beff4fa7be22cb5bc0834e7629cc1ab9.jpg', 'HolsteinFriesiancattle65_jpg.rf.5c487d86a793dc8a7ceff2b01a722902.jpg', 'Ayrshirecattle94_jpg.rf.58d574809cf09d1723944569d40f4cd2.jpg', '1200px-KA_Zoo_Huftieranlage_jpg.rf.02958f89ec8def97694f66350d7fe199.jpg', 'hf04-80_jpeg_jpg.rf.272408fc51ef3e49c5d1b603ec73cc36.jpg', 'hf03-10_jpeg_jpg.rf.324d6a25e01a319348357b5b37010640.jpg', 'hf01-42_jpeg_jpg.rf.def100ec86ea0d4c4046c64a6ffb214f.jpg', 'hf02-88_jpeg_jpg.rf.04a7babee7a32dfa8ce185e3fe8b2904.jpg', 'hf04-112_jpeg_jpg.rf.0d97d6993a501a33056bbd7b2c02452a.jpg', 'hf03-48_jpeg_jpg.rf.07d57256914ad679dab9598a86bbef4a.jpg', 'HolsteinFriesiancattle5_jpg.rf.eab1fb4545c63cb278e32fcaee9b5070.jpg', 'HolsteinFriesiancattle91_jpg.rf.be9601bda869774ec4666c8a70ef411a.jpg', 'output_0143_png_jpg.rf.0d6dbbc26c04e334af79cb6bc36f4953.jpg', 'hf02-221_jpeg_jpg.rf.4166b87681d506c091a0fe3596d47d1a.jpg', 'hf02-46_jpeg_jpg.rf.de0e29c0d49d121ea68813c737d68cdf.jpg', 'vaca263_jpg.rf.4fb326df1ca204f772ad346ee26a5729.jpg', 'img00075_jpg.rf.424504927fec24c392172a03da3fd9c1.jpg', 'Ayrshirecattle66_jpg.rf.010f766c0803b6e617ffb416b7acf3df.jpg', 'img00306_jpg.rf.b7f42034a210675fcc8010327608fd2c.jpg', 'HolsteinFriesiancattle85_jpg.rf.074a1108465606a6443df11fba7c5519.jpg', 'img00372_jpg.rf.d1f8613d3617e937a1a7cfa76becef94.jpg', 'vaca67_jpg.rf.aff96314d2c672fd1987e91dbe8729ef.jpg', 'vaca208_jpg.rf.4caef700c884a9072d53fe663b0cda37.jpg', 'HolsteinFriesiancattle123_jpg.rf.1845f21e73a81fb6d9510e1c7f80900c.jpg', 'vaca13_jpg.rf.ca6cf0ff8e6c72e6ad9e6e8c10582a54.jpg', 'HolsteinFriesiancattle38_c_jpg.rf.ae7b8331455341772687c4f8c7b0b584.jpg', 'output_0163_png_jpg.rf.15535316c57da1cf7b11be82eb7895f9.jpg', 'vaca264_jpg.rf.19b6634af7a3fa183dc520fb14ebac06.jpg', 'img00382_jpg.rf.6c2ad361a090042aaca30a797869c892.jpg', 'bullingcows_jpeg_jpg.rf.db6609f336d90a40502c72c90295ce54.jpg', 'vaca1_jpg.rf.0bfbf812c5bd2f416a6cba8037241aa2.jpg', 'hf02-205_jpeg_jpg.rf.0fb05435e854bad7509aa0a69085e9ec.jpg', 'hf02-17_jpeg_jpg.rf.528e830b851bcd0422d49ce754315792.jpg', 'hf02-110_jpeg_jpg.rf.8098d54aab7a5220c0706afe37e5cd0d.jpg', 'vaca221_jpg.rf.a592b1e568a7952126f21acef51c6845.jpg', 'Ayrshirecattle45_c_jpg.rf.f135a30342fcdabeb6be04f84ebf980e.jpg', 'HolsteinFriesiancattle26_c_jpg.rf.c551a42198d828369b9eec4b269c279a.jpg', 'hf03-79_jpeg_jpg.rf.d31ad069e67a27342e5381ee4e7790ce.jpg', 'HolsteinFriesiancattle149_c_jpg.rf.a8a8c3019dadd577d6e9a13d7d66065b.jpg', 'Ayrshirecattle47_jpg.rf.2752d760ac43842ece02bf403dc2fa9b.jpg', 'Ayrshirecattle74_c_jpg.rf.3ee88d585b6e104b88c9a207a2fec956.jpg', 'hf04-71_jpeg_jpg.rf.fdd2d53a59c4dc4145bc3e96bff0df77.jpg', 'hf03-15_jpeg_jpg.rf.efae5744e7b93b61a414d671f1ba62ac.jpg', 'vaca143_jpg.rf.5fac6aed55ca15a3c17554163c90b456.jpg', 'hf01-56_jpeg_jpg.rf.94974bd20c476f17eb4c23173520e7d3.jpg', '-OWS_mp4-321_jpg.rf.c6b997bbc257dbbedba9eaf315f8d765.jpg', 'hf02-185_jpeg_jpg.rf.d763716b6371d1674cd178cf8676ec86.jpg', 'vaca150_jpg.rf.459e4318afbd90e98b49beeeeade8ad9.jpg', 'hf04-5_jpeg_jpg.rf.5103f2b90be0623c9cbb39810e4bc34c.jpg', 'img00250_jpg.rf.aaab5da4f0260be08ff3c1e793fb16f4.jpg', 'hf04-101_jpeg_jpg.rf.67eecad19e8ad04dacd69be424122179.jpg', '-OWS_mp4-679_jpg.rf.0e4befb2a75f15e75763075038add9c7.jpg', 'hf02-15_jpeg_jpg.rf.fe98d3a5b1493031f9e6d40ed02b2aa0.jpg', 'img00402_jpg.rf.0143c1e6ce93a5d889208b07b60dbf20.jpg', 'hf03-46_jpeg_jpg.rf.9cec0c237d27831f1058be3565d67f58.jpg', 'vaca31_jpg.rf.3c193029dc78a6a55e9f74268ca42a76.jpg', 'HolsteinFriesiancattle58_jpg.rf.6f98a4a5276c1bf3f83cacfa8f5d2bb2.jpg', 'Ayrshirecattle137_c_jpg.rf.ab69e3fa26faa3ff72794e0c5fd5cf7f.jpg', '-OWS_mp4-156_jpg.rf.1f0d7a29d5d7cfa8fa43b0e9185763d2.jpg', 'depositphotos_13408876-stock-photo-large-mean-bull_jpg.rf.0be30a0d6df0255daad7d5ce869090ee.jpg', 'hf02-31_jpeg_jpg.rf.1c53d9c733b125bfd69c6d15ecce7d80.jpg', 'Ayrshirecattle7_c_jpg.rf.e8f147b21f9d549570cc06fd8f47f0e5.jpg', 'hf02-99_jpeg_jpg.rf.1fa7932b99166e5e9f53cdc6c61bf8b8.jpg', 'hf02-225_jpeg_jpg.rf.1e97fd571dc3806a1e7fab91004dcd3a.jpg', 'vaca117_jpg.rf.e0d956e06ed9f68352d032e8b3d230ac.jpg', 'HolsteinFriesiancattle127_c_jpg.rf.5cf3f1b3c69c07f7cea72cea2e1f1941.jpg', 'vaca211_jpg.rf.ec3c4a410b88df2268329db9e597fac7.jpg', 'Ayrshirecattle8_c_jpg.rf.5ab505f04eb5ef7e3c962d3934739856.jpg', 'hf02-184_jpeg_jpg.rf.2e3634c62d79b6e3d0f0fb2bc97a73e8.jpg', 'img00213_jpg.rf.f0ec03ac5baaf6f8c3a921235489e78b.jpg', 'HolsteinFriesiancattle131_jpg.rf.11ad60641ff892d84d26ee2daa6856f9.jpg', 'img00229_jpg.rf.2d5de894fb41215e418febca0492eb94.jpg', 'img00456_jpg.rf.ba6ebbaefe25dbdfea7b725dae93409e.jpg', 'hf02-58_jpeg_jpg.rf.9b36a5f0a4b45f0b169eca3ad474a7fe.jpg', 'vaca106_jpg.rf.3ab9b29a3b5077fb7eccba058525d858.jpg', 'Ayrshirecattle3_c_jpg.rf.fb7eb069fb4c8e1f1eb5fc6282a16db3.jpg', 'hf02-155_jpeg_jpg.rf.505e6ba5fc8d1ffee4e320878f84c38b.jpg', 'vaca244_jpg.rf.633cd8d789ec6f0d6bd7d3fda8ec4924.jpg', 'vaca258_jpg.rf.53fe6eb344c12e9bfad4e420a20237ad.jpg', 'Ayrshirecattle42_jpg.rf.cb045fe69c10851315f5063983508956.jpg', '-OWS_mp4-440_jpg.rf.3fef7997c427088f5e1d4430eb89c7c0.jpg', 'download_jpeg_jpg.rf.89cd56cb0de0761f8c8999c9ff21ad2c.jpg', 'bo-lai-sind-2_jpg.rf.c8dd2e22567295b45d92cfb6cde0a60d.jpg', 'vaca209_jpg.rf.9fdae5a800d3b9d383bd200b79e30076.jpg', 'hf02-55_jpeg_jpg.rf.3391a93f06e0d8c9850665e89a91d621.jpg', 'img00104_jpg.rf.ac10446aa1e6a237ff83a0137291a6ff.jpg', 'Ayrshirecattle109_c_jpg.rf.ca617da608df34a4e0048d9d87fc729e.jpg', 'hf03-40_jpeg_jpg.rf.9c7226f2812d0e87e3ae9f11c165d254.jpg', 'brahman-cattle-senegal-west-africa-africa-BG0WT9_jpg.rf.d77308992547f4da5989d99fafa51803.jpg', 'hf04-14_jpeg_jpg.rf.211189ef539f049b897ccc93e75f5c46.jpg', 'hf04-57_jpeg_jpg.rf.8eccae85ef9fd7921bcf36b785c59dcb.jpg', 'hf02-166_jpeg_jpg.rf.fb28b80327ca23cfb5ccc2c63cf67878.jpg', 'vaca92_jpg.rf.99912ee7e15b762eceae19dbe4466e05.jpg', 'hf03-30_jpeg_jpg.rf.6655a6b7bb99a5fe53ccd273de5bd916.jpg', 'hf04-91_jpeg_jpg.rf.e67e8397165aed18b2f8a7550ceacd07.jpg', 'HolsteinFriesiancattle27_jpg.rf.09abafa8eb0b238224a25abbd58af457.jpg', 'HolsteinFriesiancattle67_c_jpg.rf.81494b0b4f150eef6ae0da5809c1fd09.jpg', 'Ayrshirecattle118_c_jpg.rf.f850d09e6246576850fc81315a55934c.jpg', 'img00185_jpg.rf.ffac54bf61bfc06b142140364ee768ce.jpg', 'hf02-44_jpeg_jpg.rf.4d4f9cb04cc5c5240f672f81e246a769.jpg', 'hf03-43_jpeg_jpg.rf.d42a2be09c233f5b0ade70a1ab17ca23.jpg', 'HolsteinFriesiancattle55_jpg.rf.c5fb9c3e6d30a65b16b8c94faf8dd2aa.jpg', 'hf03-31_jpeg_jpg.rf.d952f154d7b69cfd80b88ff8105faf7e.jpg', 'vaca232_jpg.rf.825a10de33ef3b31dd5d6471980ed393.jpg', 'hf04-81_jpeg_jpg.rf.54af8fdc3306289f215495683065ef31.jpg', 'output_0174_png_jpg.rf.ab59a64e2f66cdf553d47f91f65953b6.jpg', 'vaca27_jpg.rf.7b9b00a0748013cb9a0d13e5108c5776.jpg', '-OWS_mp4-543_jpg.rf.14a948b5baef8b0f45d6f3a8b9eb088d.jpg', 'Ayrshirecattle109_jpg.rf.1d09680a952421fa278070f935163e86.jpg', 'Ayrshirecattle25_jpg.rf.d8ad1b2c910e07c2550421e7f2b9d0dc.jpg', 'Ayrshirecattle11_c_jpg.rf.570cf6be3e9a27fd6013b38bb89fcce0.jpg', 'hf02-103_jpeg_jpg.rf.16c77bf5a2a368d87317cc6b92a5b1da.jpg', 'vaca142_jpg.rf.88257cce5947763e8350e0d448178cee.jpg', 'output_0033_png_jpg.rf.880dbd7db17306a4c35601d405680d43.jpg', 'HolsteinFriesiancattle123_c_jpg.rf.340be7d711d135959532c3b8185be9a0.jpg', '-OWS_mp4-266_jpg.rf.64223dc588eb5cf215572f5c0ba9c067.jpg', 'hf02-204_jpeg_jpg.rf.e1ffebfc468ed351ed3a9baa0b116ce6.jpg', 'HolsteinFriesiancattle51_c_jpg.rf.1475353588929085ea8e89355fb77cf4.jpg', 'hf04-77_jpeg_jpg.rf.4008094881974150a6ee142e3e0cc193.jpg', '-OWS_mp4-8_jpg.rf.e581d6b33454362539f15c2fa4d7a630.jpg', 'vaca17_jpg.rf.77866556a2e5126b38d88896a0bebb09.jpg', 'check-sri-lanka-poised-to-ban-cattle-slaughter-5f62d3ccb4d63_600-removebg-preview_png_jpg.rf.63dc0d6641a0cff5198209f4eb174a8e.jpg', 'img00009_jpg.rf.0024014859a5ba5e3eac0a2258e6a2ae.jpg', 'vaca155_jpg.rf.6b357ebaa49cfbc2355a34b381ab78a5.jpg', 'depositphotos_435351454-stock-photo-cute-brown-cow-white-background_jpg.rf.20afb27a9bd074d410c758865ba553fe.jpg', 'HolsteinFriesiancattle73_c_jpg.rf.34d81bbddf5e0de566d6f7e0e705f9b9.jpg', 'img00214_jpg.rf.256612092d7a9250388ba947f092db80.jpg', 'hf04-10_jpeg_jpg.rf.29c87f68f57ea64dcc9b392aad081cf5.jpg', 'vaca159_jpg.rf.976f86dc4e5c27a7979c640f05fb2d03.jpg', 'hf04-18_jpeg_jpg.rf.6ab0c70a96b48a399879d84895e00dab.jpg', 'Ayrshirecattle67_jpg.rf.dcd4b927fc29a3419a7400b173a35be4.jpg', 'Ayrshirecattle138_jpg.rf.43536b57b8e93b0b4934d671ffc434b4.jpg', 'img00112_jpg.rf.9fa4afa1d8812ca7f2b813c997a3f08e.jpg', 'hf02-199_jpeg_jpg.rf.a44e62ca09dca68cde63b073c93a5878.jpg', 'Ayrshirecattle57_jpg.rf.a90ea6f7bba0a14c83ebbfaa249428d5.jpg', 'vaca99_jpg.rf.2ae38e16b28d9da25ba5252478b9a967.jpg', 'hf04-87_jpeg_jpg.rf.6d69fdce211de4a1497b09e0e5ef48ac.jpg', 'hf02-226_jpeg_jpg.rf.dee44917c1d0b4ec726df0a4d6ef3b46.jpg', 'hf01-66_jpeg_jpg.rf.b97f52f9d916e53ff33f62125a468f49.jpg', 'img00024_jpg.rf.0daa4de6ece6fd7341e06a58c4d8e5ed.jpg', 'vaca260_jpg.rf.2d04fe3147e9b46e7f9350a1bf0d40db.jpg', '-OWS_mp4-637_jpg.rf.100437cc5e6c9557b0f50ebe6d53fb08.jpg', 'HolsteinFriesiancattle83_jpg.rf.0e5a26eb8b29014369441f299202a84e.jpg', 'img00439_jpg.rf.cc9167ca65a3acdab0792490feec6e00.jpg', 'img00159_jpg.rf.6d04c497ece29bdbdd60e8a0ada243f5.jpg', 'img00426_jpg.rf.44f4f87428ab16f9b276a0f5bbe80532.jpg', 'Ayrshirecattle46_c_jpg.rf.53d64dba2dbb768a47fd9d1b12584d3a.jpg', 'vaca59_jpg.rf.efc001ac79dbc674fea29ddcd4656010.jpg', 'img00345_jpg.rf.a3567b24299f6b68d2a3a1d41878ff2c.jpg', 'hf02-132_jpeg_jpg.rf.8aff4944fc1787bb49ed3edf2af94a66.jpg', 'HolsteinFriesiancattle99_jpg.rf.3178b009749596686c737ece0f50b9e2.jpg', 'HolsteinFriesiancattle116_c_jpg.rf.3b42bd83e4a7a76576232c658ed31b10.jpg', 'g2021_fig01_jpeg_jpg.rf.0d40e9b3f54db9b2170a8bd44effa9d4.jpg', 'img00002_jpg.rf.d60552c8d0599dd569c0d4d1f1e4adc8.jpg', 'hf01-62_jpeg_jpg.rf.7357c45b1933a68ac6edf86ca6242633.jpg', '-OWS_mp4-203_jpg.rf.237d66202ebd25127286a2bb941c4d7f.jpg', 'hf02-13_jpeg_jpg.rf.4a2ce9d05f2db2daa965ca8d6fdeb75d.jpg', 'HolsteinFriesiancattle75_c_jpg.rf.8e2b80f82e5892d001cec1f7381f544b.jpg', 'vaca21_jpg.rf.f41a246ac38b06522ca66eb2b8ed0ac7.jpg', 'hf02-177_jpeg_jpg.rf.670d9dc1f0dbe05d519d028ecea36046.jpg', 'vaca60_jpg.rf.7d5f692ae50f2d4a4fdd85b179f597e9.jpg', 'img00162_jpg.rf.d45702fb5e80407c0156340b1fe3537e.jpg', 'Ayrshirecattle32_c_jpg.rf.1d376007e07b8b8ff6c2521b3993e556.jpg', 'hf01-61_jpeg_jpg.rf.33ee82d88a1c8b78ec28baf7729eb82e.jpg', 'HolsteinFriesiancattle100_c_jpg.rf.44cde2073aee31f4b038cc52dc7a4b53.jpg', 'hf02-115_jpeg_jpg.rf.d87d3cf903fe1eb5f8efa3cbc5be55f1.jpg', '3-heifers-should-be-cycling-before-entering-synchrony-programmes_jpeg_jpg.rf.6274bc347dd1034d85a49b2f14de9f60.jpg', 'HolsteinFriesiancattle6_jpg.rf.7130e450763e606f18d75c978c6bbe0d.jpg', '-OWS_mp4-707_jpg.rf.745f238e3eea458f89be3bff87d77ac1.jpg', 'hf02-182_jpeg_jpg.rf.3d72e19d0ab92897716e06fb78a4482b.jpg', 'HolsteinFriesiancattle29_c_jpg.rf.9b55b25bf04e9734998699afc7b68151.jpg', 'hf03-117_jpeg_jpg.rf.e5572498bf6111db006667f72ac485ef.jpg', 'img00127_jpg.rf.0bf1509ce641410df7040ff419764b6a.jpg', 'img00038_jpg.rf.44a64e737183b2118784fd1f71c523c7.jpg', 'vaca28_jpg.rf.17926d68b0011cf941ab6237017148e7.jpg', 'HolsteinFriesiancattle126_jpg.rf.19124ce95b629117f863888d93a11aba.jpg', 'HolsteinFriesiancattle148_c_jpg.rf.7848b9cb6f0f1c85f0ddcc313036de4c.jpg', 'hf01-32_jpeg_jpg.rf.2b2fb0033b5328c1df71da88a446806d.jpg', 'thumb-816x460-9462999ae57db6c337756ee1c8e9cf3a_jpg.rf.2eecf2ef3a683d7fba14d61781668896.jpg', 'img00096_jpg.rf.09853cb10c84d0dcd78dbd46ebe44657.jpg', 'HolsteinFriesiancattle142_c_jpg.rf.f0c8303fc7313224f65e480f36bf070e.jpg', 'hf04-82_jpeg_jpg.rf.24c2e515b1f7e921b3d39caac3d028fe.jpg', 'vaca86_jpg.rf.b44666aec3dfb892a017ec3e47df3bc9.jpg', 'hf03-25_jpeg_jpg.rf.a8332cbffaead44df5ab22e60d8563da.jpg', 'output_0279_png_jpg.rf.ea774532462160146b34f78ca6e30fa3.jpg', 'hf01-10_jpeg_jpg.rf.853192051f50135a280b4671aed74387.jpg', 'hf03-22_jpeg_jpg.rf.da25f2e64b8d3f4e111a38f2b4854887.jpg', 'images_jpeg_jpg.rf.027b76d9573ed1e2e53ebdcc8d80abc5.jpg', 'HolsteinFriesiancattle40_c_jpg.rf.a4500ec8335002d4f164a29c03eef2c8.jpg', 'Ayrshirecattle33_c_jpg.rf.b7986bf30729858d5aef07d5f8c8e717.jpg', 'img00010_jpg.rf.2db613fd20c47bb2e219d769efbb2bd4.jpg', 'hf01-11_jpeg_jpg.rf.e552c9aae0e722345383ca4fd90cb3a1.jpg', 'hf03-57_jpeg_jpg.rf.dd2c33799f5696f177939109cd787b48.jpg', 'vaca116_jpg.rf.899b930ff75d5a78165996ce585f963f.jpg', 'output_0086_png_jpg.rf.00c42d33711596d0402e375abb0edd56.jpg', '-OWS_mp4-649_jpg.rf.4e4963e500dbfdea3ede67fb6f949765.jpg', 'vaca144_jpg.rf.d6ca6aadc7cc097ed613bad1b80d8ad3.jpg', 'hf04-54_jpeg_jpg.rf.ce8eacf3b44b2e6b21ca3181f7d90b3f.jpg', 'vaca167_jpg.rf.f448f9a0e446e9fb23764c00c345aafa.jpg', 'hf02-35_jpeg_jpg.rf.60d797178db230eeea369fa61c0bd470.jpg', 'vaca87_jpg.rf.4bc8d15127848dcc1dfd1b54a1514ded.jpg', 'img00262_jpg.rf.eaebd5574832a84a340cefe4d92cf642.jpg', 'hf02-189_jpeg_jpg.rf.febf42bb52f3424d7204a1b835397278.jpg', 'HolsteinFriesiancattle73_jpg.rf.2f371f15cbf974fc981fbb61e3a97198.jpg', 'hf02-209_jpeg_jpg.rf.c127a995a402f796ce89f11db3092ac7.jpg', 'img00330_jpg.rf.6e48393c9d48afac1ab36d91777b8733.jpg', 'hf04-3_jpeg_jpg.rf.91cabfd3cb8da3a93dafff611e9eecb3.jpg', 'vaca141_jpg.rf.3567688facdca2b83eca6d56f14bee3c.jpg', 'hf02-163_jpeg_jpg.rf.dd06bac8703f52033ef3f301bd9c3487.jpg', 'HolsteinFriesiancattle103_jpg.rf.2608c81b8fd6d0882d9e2cf53288047c.jpg', 'Ayrshirecattle94_c_jpg.rf.ed6bd6544bb907a7a3ab8344c02f0255.jpg', 'vaca56_jpg.rf.446c080a0ead87ce07e50e94fb535610.jpg', 'vaca295_jpg.rf.c343c6aecb2e0b9bd091a69c834ca7a8.jpg', 'hf02-76_jpeg_jpg.rf.8d79a01f2b75b43239f9e55c5d97f68f.jpg', 'vaca267_jpg.rf.07cf8f43a28d7238c730942742acc855.jpg', 'vaca278_jpg.rf.d1272cc2160641ea165c76ef9b7c58be.jpg', 'Ayrshirecattle42_c_jpg.rf.c2ca6f7c14e932552b37875beaac61d4.jpg', 'hf03-109_jpeg_jpg.rf.575fbc2ef060a89e003cd3c2ab8e7cdc.jpg', 'images-27-_jpg.rf.94a8aa7b2f5f9c257f1eb0cddd611075.jpg', 'vaca126_jpg.rf.34a9caafa4d9f822355922e1ec3eee46.jpg', 'HolsteinFriesiancattle98_c_jpg.rf.6bd96a4e2add176b30c695b6944f82e2.jpg', 'hf04-50_jpeg_jpg.rf.d96c6ee735eac6f818aded7afadc2b49.jpg', 'HolsteinFriesiancattle78_jpg.rf.5cb9bb8e4c03b8aa52269fcd00fffaec.jpg', 'cow-png-bull-cow-11562880293seqgt9blx9_png_jpg.rf.01c83429640a63f373367db6713746af.jpg', 'hf04-19_jpeg_jpg.rf.438ce4e97ef5ff944edb3ec024abad98.jpg', 'hf04-95_jpeg_jpg.rf.1483571652604a95d417484f0157365e.jpg', 'hf02-45_jpeg_jpg.rf.877654d6627bcffd382b1d04f8a09969.jpg', 'vaca164_jpg.rf.075569abbdec6023cec04bcd248050e9.jpg', 'Ayrshirecattle134_jpg.rf.69e0b03c429b8165d89b2dacb78bcd89.jpg', 'vaca48_jpg.rf.7064e619d5f0c6dfe2cd020c59e6e8e6.jpg', 'vaca100_jpg.rf.027b7655dd461d4a1db1c0a993db5375.jpg', 'output_0240_png_jpg.rf.e5dc3c236f853c6609741be60d092fe2.jpg', 'vaca157_jpg.rf.ab39540110c9be3f1b3a03e9ef7fea53.jpg', 'vaca270_jpg.rf.55473e3b0c3d0b6d3b9a60974844dde6.jpg', 'Ayrshirecattle121_c_jpg.rf.9e970ad305b4cf6de1b453ca2816890c.jpg', 'Ayrshirecattle107_jpg.rf.2d2502397c700bc57826b6204763a334.jpg', 'HolsteinFriesiancattle12_jpg.rf.56a3b6c31dbbbc820215598bb58f428c.jpg', '-OWS_mp4-399_jpg.rf.79a3208c6f9cf8fc19dff6ab662cf06e.jpg', '-OWS_mp4-674_jpg.rf.d60631f3843a18babc46a5870ffb208b.jpg']\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "#If dataset is huge: limit images per class to speed up training:\n",
+        "# inside earlier loop, slice files[:200] to keep max 200 images/class\n"
+      ],
+      "metadata": {
+        "id": "yCJhWqyzV4Lg"
+      },
+      "execution_count": 33,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from tensorflow.keras.preprocessing.image import ImageDataGenerator\n",
+        "\n",
+        "IMAGE_SIZE = (224,224)\n",
+        "BATCH_SIZE = 32\n",
+        "\n",
+        "train_datagen = ImageDataGenerator(\n",
+        "    rescale=1./255,\n",
+        "    rotation_range=20,\n",
+        "    width_shift_range=0.1,\n",
+        "    height_shift_range=0.1,\n",
+        "    zoom_range=0.1,\n",
+        "    horizontal_flip=True,\n",
+        ")\n",
+        "\n",
+        "val_datagen = ImageDataGenerator(rescale=1./255)\n",
+        "\n",
+        "train_gen = train_datagen.flow_from_directory(\n",
+        "    '/content/data/organized_dataset/train', # Corrected path\n",
+        "    target_size=IMAGE_SIZE,\n",
+        "    batch_size=BATCH_SIZE,\n",
+        "    class_mode='categorical'\n",
+        ")\n",
+        "\n",
+        "val_gen = val_datagen.flow_from_directory(\n",
+        "    '/content/data/organized_dataset/val', # Corrected path\n",
+        "    target_size=IMAGE_SIZE,\n",
+        "    batch_size=BATCH_SIZE,\n",
+        "    class_mode='categorical'\n",
+        ")"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "zdG_EcA6WIWH",
+        "outputId": "0a92b6f8-0009-475f-e6fd-d63081539cc8"
+      },
+      "execution_count": 36,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Found 3077 images belonging to 4 classes.\n",
+            "Found 983 images belonging to 4 classes.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "f5a88c37",
+        "outputId": "91d6da1d-12d6-43dc-8dbd-6759eb3044a5"
+      },
+      "source": [
+        "import os\n",
+        "\n",
+        "# List contents of the organized training directory\n",
+        "print(\"Contents of /content/data/organized_dataset/train:\")\n",
+        "print(os.listdir('/content/data/organized_dataset/train'))\n",
+        "\n",
+        "# List contents of the organized validation directory\n",
+        "print(\"\\nContents of /content/data/organized_dataset/val:\")\n",
+        "print(os.listdir('/content/data/organized_dataset/val'))"
+      ],
+      "execution_count": 39,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Contents of /content/data/organized_dataset/train:\n",
+            "['cows', 'buffalo', 'images', 'labels']\n",
+            "\n",
+            "Contents of /content/data/organized_dataset/val:\n",
+            "['cows', 'buffalo', 'images', 'labels']\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "model.save('/content/drive/MyDrive/animal_breed_model.h5')\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 141
+        },
+        "id": "ItIZo86KWnOX",
+        "outputId": "0d237822-9fbc-47c4-e3cd-7ec6940cfe0e"
+      },
+      "execution_count": 41,
+      "outputs": [
+        {
+          "output_type": "error",
+          "ename": "NameError",
+          "evalue": "name 'model' is not defined",
+          "traceback": [
+            "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+            "\u001b[0;31mNameError\u001b[0m                                 Traceback (most recent call last)",
+            "\u001b[0;32m/tmp/ipython-input-2255082867.py\u001b[0m in \u001b[0;36m<cell line: 0>\u001b[0;34m()\u001b[0m\n\u001b[0;32m----> 1\u001b[0;31m \u001b[0mmodel\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0msave\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m'/content/drive/MyDrive/animal_breed_model.h5'\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m",
+            "\u001b[0;31mNameError\u001b[0m: name 'model' is not defined"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "be49392a"
+      },
+      "source": [
+        "Let's build a simple Convolutional Neural Network (CNN) model for image classification."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 489
+        },
+        "id": "2aa70583",
+        "outputId": "874ea14a-cae7-4edb-d73c-fbec13abb877"
+      },
+      "source": [
+        "from tensorflow.keras.models import Sequential\n",
+        "from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense\n",
+        "\n",
+        "# Get the number of classes from the training generator\n",
+        "num_classes = train_gen.num_classes\n",
+        "print(f\"Number of classes: {num_classes}\")\n",
+        "\n",
+        "model = Sequential([\n",
+        "    Conv2D(32, (3, 3), activation='relu', input_shape=(IMAGE_SIZE[0], IMAGE_SIZE[1], 3)),\n",
+        "    MaxPooling2D(2, 2),\n",
+        "    Conv2D(64, (3, 3), activation='relu'),\n",
+        "    MaxPooling2D(2, 2),\n",
+        "    Conv2D(128, (3, 3), activation='relu'),\n",
+        "    MaxPooling2D(2, 2),\n",
+        "    Flatten(),\n",
+        "    Dense(512, activation='relu'),\n",
+        "    Dense(num_classes, activation='softmax') # Output layer with number of classes and softmax activation\n",
+        "])\n",
+        "\n",
+        "# Compile the model\n",
+        "model.compile(optimizer='adam',\n",
+        "              loss='categorical_crossentropy',\n",
+        "              metrics=['accuracy'])\n",
+        "\n",
+        "model.summary()"
+      ],
+      "execution_count": 42,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Number of classes: 4\n"
+          ]
+        },
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "/usr/local/lib/python3.12/dist-packages/keras/src/layers/convolutional/base_conv.py:113: UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead.\n",
+            "  super().__init__(activity_regularizer=activity_regularizer, **kwargs)\n"
+          ]
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "\u001b[1mModel: \"sequential\"\u001b[0m\n"
+            ],
+            "text/html": [
+              "<pre style=\"white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\"><span style=\"font-weight: bold\">Model: \"sequential\"</span>\n",
+              "</pre>\n"
+            ]
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓\n",
+              "┃\u001b[1m \u001b[0m\u001b[1mLayer (type)                   \u001b[0m\u001b[1m \u001b[0m┃\u001b[1m \u001b[0m\u001b[1mOutput Shape          \u001b[0m\u001b[1m \u001b[0m┃\u001b[1m \u001b[0m\u001b[1m      Param #\u001b[0m\u001b[1m \u001b[0m┃\n",
+              "┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩\n",
+              "│ conv2d (\u001b[38;5;33mConv2D\u001b[0m)                 │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m222\u001b[0m, \u001b[38;5;34m222\u001b[0m, \u001b[38;5;34m32\u001b[0m)   │           \u001b[38;5;34m896\u001b[0m │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ max_pooling2d (\u001b[38;5;33mMaxPooling2D\u001b[0m)    │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m111\u001b[0m, \u001b[38;5;34m111\u001b[0m, \u001b[38;5;34m32\u001b[0m)   │             \u001b[38;5;34m0\u001b[0m │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ conv2d_1 (\u001b[38;5;33mConv2D\u001b[0m)               │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m109\u001b[0m, \u001b[38;5;34m109\u001b[0m, \u001b[38;5;34m64\u001b[0m)   │        \u001b[38;5;34m18,496\u001b[0m │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ max_pooling2d_1 (\u001b[38;5;33mMaxPooling2D\u001b[0m)  │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m54\u001b[0m, \u001b[38;5;34m54\u001b[0m, \u001b[38;5;34m64\u001b[0m)     │             \u001b[38;5;34m0\u001b[0m │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ conv2d_2 (\u001b[38;5;33mConv2D\u001b[0m)               │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m52\u001b[0m, \u001b[38;5;34m52\u001b[0m, \u001b[38;5;34m128\u001b[0m)    │        \u001b[38;5;34m73,856\u001b[0m │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ max_pooling2d_2 (\u001b[38;5;33mMaxPooling2D\u001b[0m)  │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m26\u001b[0m, \u001b[38;5;34m26\u001b[0m, \u001b[38;5;34m128\u001b[0m)    │             \u001b[38;5;34m0\u001b[0m │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ flatten (\u001b[38;5;33mFlatten\u001b[0m)               │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m86528\u001b[0m)          │             \u001b[38;5;34m0\u001b[0m │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ dense (\u001b[38;5;33mDense\u001b[0m)                   │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m512\u001b[0m)            │    \u001b[38;5;34m44,302,848\u001b[0m │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ dense_1 (\u001b[38;5;33mDense\u001b[0m)                 │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m4\u001b[0m)              │         \u001b[38;5;34m2,052\u001b[0m │\n",
+              "└─────────────────────────────────┴────────────────────────┴───────────────┘\n"
+            ],
+            "text/html": [
+              "<pre style=\"white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\">┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓\n",
+              "┃<span style=\"font-weight: bold\"> Layer (type)                    </span>┃<span style=\"font-weight: bold\"> Output Shape           </span>┃<span style=\"font-weight: bold\">       Param # </span>┃\n",
+              "┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩\n",
+              "│ conv2d (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">Conv2D</span>)                 │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">222</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">222</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">32</span>)   │           <span style=\"color: #00af00; text-decoration-color: #00af00\">896</span> │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ max_pooling2d (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">MaxPooling2D</span>)    │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">111</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">111</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">32</span>)   │             <span style=\"color: #00af00; text-decoration-color: #00af00\">0</span> │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ conv2d_1 (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">Conv2D</span>)               │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">109</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">109</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">64</span>)   │        <span style=\"color: #00af00; text-decoration-color: #00af00\">18,496</span> │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ max_pooling2d_1 (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">MaxPooling2D</span>)  │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">54</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">54</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">64</span>)     │             <span style=\"color: #00af00; text-decoration-color: #00af00\">0</span> │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ conv2d_2 (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">Conv2D</span>)               │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">52</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">52</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">128</span>)    │        <span style=\"color: #00af00; text-decoration-color: #00af00\">73,856</span> │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ max_pooling2d_2 (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">MaxPooling2D</span>)  │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">26</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">26</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">128</span>)    │             <span style=\"color: #00af00; text-decoration-color: #00af00\">0</span> │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ flatten (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">Flatten</span>)               │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">86528</span>)          │             <span style=\"color: #00af00; text-decoration-color: #00af00\">0</span> │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ dense (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">Dense</span>)                   │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">512</span>)            │    <span style=\"color: #00af00; text-decoration-color: #00af00\">44,302,848</span> │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ dense_1 (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">Dense</span>)                 │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">4</span>)              │         <span style=\"color: #00af00; text-decoration-color: #00af00\">2,052</span> │\n",
+              "└─────────────────────────────────┴────────────────────────┴───────────────┘\n",
+              "</pre>\n"
+            ]
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "\u001b[1m Total params: \u001b[0m\u001b[38;5;34m44,398,148\u001b[0m (169.37 MB)\n"
+            ],
+            "text/html": [
+              "<pre style=\"white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\"><span style=\"font-weight: bold\"> Total params: </span><span style=\"color: #00af00; text-decoration-color: #00af00\">44,398,148</span> (169.37 MB)\n",
+              "</pre>\n"
+            ]
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "\u001b[1m Trainable params: \u001b[0m\u001b[38;5;34m44,398,148\u001b[0m (169.37 MB)\n"
+            ],
+            "text/html": [
+              "<pre style=\"white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\"><span style=\"font-weight: bold\"> Trainable params: </span><span style=\"color: #00af00; text-decoration-color: #00af00\">44,398,148</span> (169.37 MB)\n",
+              "</pre>\n"
+            ]
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "\u001b[1m Non-trainable params: \u001b[0m\u001b[38;5;34m0\u001b[0m (0.00 B)\n"
+            ],
+            "text/html": [
+              "<pre style=\"white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\"><span style=\"font-weight: bold\"> Non-trainable params: </span><span style=\"color: #00af00; text-decoration-color: #00af00\">0</span> (0.00 B)\n",
+              "</pre>\n"
+            ]
+          },
+          "metadata": {}
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "4f7fb2f8"
+      },
+      "source": [
+        "Now let's train the CNN model using the image data generators."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "6d71774c",
+        "outputId": "59698238-ef74-47be-c6a1-e9d0015e611b"
+      },
+      "source": [
+        "# Train the model\n",
+        "history = model.fit(\n",
+        "    train_gen,\n",
+        "    steps_per_epoch=train_gen.samples // BATCH_SIZE,\n",
+        "    epochs=10, # You can adjust the number of epochs\n",
+        "    validation_data=val_gen,\n",
+        "    validation_steps=val_gen.samples // BATCH_SIZE\n",
+        ")"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "metadata": {
+            "tags": null
+          },
+          "name": "stderr",
+          "output_type": "stream",
+          "text": [
+            "/usr/local/lib/python3.12/dist-packages/keras/src/trainers/data_adapters/py_dataset_adapter.py:121: UserWarning: Your `PyDataset` class should call `super().__init__(**kwargs)` in its constructor. `**kwargs` can include `workers`, `use_multiprocessing`, `max_queue_size`. Do not pass these arguments to `fit()`, as they will be ignored.\n",
+            "  self._warn_if_super_not_called()\n"
+          ]
+        },
+        {
+          "metadata": {
+            "tags": null
+          },
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "Epoch 1/10\n",
+            "\u001b[1m98/98\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m452s\u001b[0m 5s/step - accuracy: 0.4337 - loss: 1.3784 - val_accuracy: 0.5101 - val_loss: 0.8921\n",
+            "Epoch 2/10\n",
+            "\u001b[1m 1/98\u001b[0m \u001b[37m━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[1m5:21\u001b[0m 3s/step - accuracy: 0.3438 - loss: 0.9952"
+          ]
+        },
+        {
+          "metadata": {
+            "tags": null
+          },
+          "name": "stderr",
+          "output_type": "stream",
+          "text": [
+            "/usr/local/lib/python3.12/dist-packages/keras/src/trainers/epoch_iterator.py:116: UserWarning: Your input ran out of data; interrupting training. Make sure that your dataset or generator can generate at least `steps_per_epoch * epochs` batches. You may need to use the `.repeat()` function when building your dataset.\n",
+            "  self._interrupted_warning()\n"
+          ]
+        },
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "\u001b[1m98/98\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m84s\u001b[0m 832ms/step - accuracy: 0.3438 - loss: 0.9952 - val_accuracy: 0.4671 - val_loss: 0.9048\n",
+            "Epoch 3/10\n",
+            "\u001b[1m98/98\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m466s\u001b[0m 5s/step - accuracy: 0.4501 - loss: 0.8837 - val_accuracy: 0.4992 - val_loss: 0.8591\n",
+            "Epoch 4/10\n",
+            "\u001b[1m98/98\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m42s\u001b[0m 389ms/step - accuracy: 0.5312 - loss: 0.8279 - val_accuracy: 0.4671 - val_loss: 0.8665\n",
+            "Epoch 5/10\n",
+            "\u001b[1m98/98\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m564s\u001b[0m 5s/step - accuracy: 0.4861 - loss: 0.8770 - val_accuracy: 0.5870 - val_loss: 0.8339\n",
+            "Epoch 6/10\n",
+            "\u001b[1m98/98\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m82s\u001b[0m 807ms/step - accuracy: 0.5938 - loss: 0.7812 - val_accuracy: 0.5853 - val_loss: 0.8505\n",
+            "Epoch 7/10\n",
+            "\u001b[1m98/98\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m462s\u001b[0m 5s/step - accuracy: 0.4776 - loss: 0.8585 - val_accuracy: 0.5228 - val_loss: 0.8344\n",
+            "Epoch 8/10\n",
+            "\u001b[1m98/98\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m82s\u001b[0m 800ms/step - accuracy: 0.4688 - loss: 0.7650 - val_accuracy: 0.5507 - val_loss: 0.8342\n",
+            "Epoch 9/10\n",
+            "\u001b[1m85/98\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m━━━\u001b[0m \u001b[1m54s\u001b[0m 4s/step - accuracy: 0.4789 - loss: 0.8430"
+          ]
+        }
+      ]
+    }
+  ]
+}
